@@ -1,5 +1,8 @@
+require('promise.prototype.finally').shim();
+require('colors');
+const debug = require('debug')('=D=');
 const SerialPort = require('serialport');
-const RegexParser = require('parser-regex');
+const { Transform } = require('stream');
 const jsesc = require('jsesc');
 const program = require('commander');
 const fs = require('fs');
@@ -11,63 +14,127 @@ class NoResponseError extends Error {
     }
 }
 
+class ModemParser extends Transform {
+    constructor (opts) {
+        opts = Object.assign({}, opts, { readableObjectMode: true });
+        super(opts);
+        this.data = '';
+    }
+    
+    _transform (chunk, encoding, cb) {
+        debug("got", chunk);
+        this.data += chunk.toString("binary");
+        var tests = [
+            [/^\n(>)/, "prompt"],
+            [/^([0-9])[\r\n]*/, "code"]
+        ];
+        for (var test of tests) {
+            var res = this.data.match(test[0]);
+            if (res) {
+                console.log("< %s".bold.green, jsesc(res[0]).bold.green);
+                var response = {}
+                for (var i = 1; i < test.length; i++) {
+                    response[test[i]] = res[i];
+                }
+                this.push(response);
+                this.data = this.data.slice(res[0].length);
+            }
+        }
+        setImmediate(cb);
+    }
+    
+    _flush(cb) {
+        this.push(this.data);
+        this.data = '';
+        setImmediate(cb);
+    }
+}
+
+function has (key) {
+    return obj => obj && typeof obj[key] !== 'undefined';
+}
+
+
 class GSM {
-	constructor(port, baudrate) {
-		console.log("connecting to %s, baudrate=%d", port, baudrate);
-		this.port = new SerialPort(port, { baudRate: baudrate });
-
-		this.port.on('error', function(err) {
-		  console.log('Error: ', err.message);
-		})
-
-		this.parser = this.port.pipe(new RegexParser({ regex: /[\r\n]+/ }));
-		
+	constructor() {
 		this.silence_timeout = 20;
-		
 	}
+    
+    async connect(path, baudrate) {
+		debug("connecting to %s, baudrate=%d", path, baudrate);
+		var port = new SerialPort(path, { baudRate: baudrate, autoOpen: false });
+        this.port = port;
+
+        return new Promise((resolve, reject) =>{
+            port.open(reject);
+            port.on('open', resolve);
+		});
+    }
 	
-	async command(cmd, timeout = 10000, repeat = 0) {
+	async command(cmd, opts) {
 		
+        opts = opts || {};
+        var timeout = opts.timeout || 10000;
+        var repeat = opts.repeat || 0;
+        var response_valid = opts.response_valid || has('code');
+        
 		var response;
 		var counter = 0;
-		while (!response && (repeat == 0 || counter < repeat)) {
+		while (!response_valid(response) && (!repeat || counter < repeat)) {
 			try {
-				var gsm = this;
-				var silence_timeout_id;
-				var on_data;
-				var response = { cmd: cmd };
-				var promise = new Promise( (resolve, reject) => {
-					gsm.parser.on('data', (data) => {
-						console.log("< %s", jsesc(data));
-						parse_response(data, response);
-						if (silence_timeout_id) {
-							clearTimeout(silence_timeout_id);
-						}
-						silence_timeout_id = setTimeout(() => resolve(response), gsm.silence_timeout);
-					});
-					setTimeout(() => reject(new NoResponseError(cmd)), timeout);
-				});
-				
-				console.log("> %s", jsesc(cmd));
-				gsm.port.write(cmd + "\r");
-				await gsm.port.drain();
+				var promise = this.receiveResponse(cmd, response_valid, timeout);
+                
+				console.log("> %s".bold.yellow, jsesc(cmd + "\r").bold.yellow);
+				this.port.write(cmd + "\r");
+				await this.port.drain();
 				counter++;
-				console.log("waiting for response (%d tries)", counter);
+				debug("waiting for response (%d tries)", counter);
 				response = await promise;
 				
-				console.log("response:", response);
+				debug("response:", response);
 			}
 			catch (e) {
 				if (!(e instanceof NoResponseError)) {
 					throw e;
 				}
 			}
-			gsm.parser.removeAllListeners('data');
+			//gsm.parser.removeAllListeners('data');
 		}
 		return response;	
 	}
 	
-	AT() { return this.command("AT", 2000); }
+    receiveResponse(cmd, response_valid, timeout) {
+        var silence_timeout = this.silense_timeout;
+        var silence_timeout_id;
+        var parser = new ModemParser();
+        var port = this.port;
+        
+        port.pipe(parser);
+        var response = { cmd: cmd };
+        var promise = new Promise( (resolve, reject) => {
+            parser.on('data', (res) => {
+                Object.assign(response, res);
+                debug("res", res, "response", response);
+                if (silence_timeout_id) {
+                    clearTimeout(silence_timeout_id);
+                }
+                if (response_valid) {
+                    resolve(response);
+                }
+                silence_timeout_id = setTimeout(() => resolve(response), silence_timeout);
+            });
+            setTimeout(() => reject(new NoResponseError(cmd)), timeout);
+        });
+        return promise.finally(() => { port.unpipe(parser); } )
+    }
+    
+    async sendData(data) {
+        this.port.write(data);
+        console.log("> %s".bold.yellow, jsesc(data).bold.yellow);
+        return this.port.drain();
+    }
+
+	AT() { return this.command("AT", { timeout: 2000 }); }
 	
 	async loadCert(filename) {
 		var data = fs.readFileSync(filename);
@@ -75,7 +142,9 @@ class GSM {
 	}
 	
 	async writeFile(filename, data) {
-		return this.command(`AT+UDWNFILE="${filename}",${data.length}`, 10000, 1);
+		await this.command(`AT+UDWNFILE="${filename}",${data.length}`, { response_valid: response => response && response.prompt == '>' });
+        await this.sendData(data);
+        return this.receiveResponse("data", has('code'), 10000);
 	}
 }
 
@@ -114,12 +183,20 @@ async function list_ports() {
 }
 
 async function main(port, baudrate) {
-	var gsm = new GSM(port, +baudrate || 115200);
-	await gsm.AT();
-	await gsm.AT();
-	//await gsm.loadCert("/work/cert/ME8_PO00000008_Batch0001/3c8012db-0e00-4745-af0d-0ed7ff4cdcde/car_Cert.crt");
-	await gsm.command("ATI");
-	await gsm.writeFile("test_file", "test content");
+	var gsm = new GSM();
+    try {
+        await gsm.connect(port, +baudrate || 115200);
+	    await gsm.AT();
+	    //await gsm.AT();
+	    //await gsm.loadCert("/work/cert/ME8_PO00000008_Batch0001/3c8012db-0e00-4745-af0d-0ed7ff4cdcde/car_Cert.crt");
+	    //await gsm.command("ATI");
+	    await gsm.writeFile("test_file", "test content");
+	    await gsm.AT();
+        console.log("Finished");
+        process.exit();
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 

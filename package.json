@@ -9,8 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "colors": "^1.2.4",
     "commander": "^2.15.1",
+    "debug": "^3.1.0",
     "jsesc": "^2.5.1",
+    "npm": "^6.0.0",
+    "promise.prototype.finally": "^3.1.0",
     "serialport": "^6.2.0"
   }
 }
