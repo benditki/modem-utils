@@ -22,24 +22,35 @@ class ModemParser extends Transform {
     }
     
     _transform (chunk, encoding, cb) {
-        debug("got", chunk);
+        debug("got", jsesc(chunk.toString('binary')));
         this.data += chunk.toString("binary");
         var tests = [
-            [/^\n(>)/, "prompt"],
-            [/^([0-9])[\r\n]*/, "code"]
+            [/^\n?(>)/, "prompt"],
+			[/^\+CME ERROR: (.*)[\r\n]+/, "error"],
+            [/^([0-9])[\r\n]*/, "code"],
+			[/^(.+?)[\r\n]+/, "body"]
         ];
-        for (var test of tests) {
-            var res = this.data.match(test[0]);
-            if (res) {
-                console.log("< %s".bold.green, jsesc(res[0]).bold.green);
-                var response = {}
-                for (var i = 1; i < test.length; i++) {
-                    response[test[i]] = res[i];
-                }
-                this.push(response);
-                this.data = this.data.slice(res[0].length);
-            }
-        }
+		var parsing = true;
+		while (this.data.length && parsing) {
+			parsing = false;
+			for (var test of tests) {
+				debug("parsing", jsesc(this.data), "with", test[0]);
+				var res = this.data.match(test[0]);
+				if (res) {
+					parsing = true;
+					console.log("< %s".bold.green, jsesc(res[0]).bold.green);
+					var response = {}
+					for (var i = 1; i < test.length; i++) {
+						response[test[i]] = res[i];
+					}
+					if (typeof response.error !== 'undefined') {
+						response.code = 4;
+					}
+					this.push(response);
+					this.data = this.data.slice(res[0].length);
+				}
+			}
+		}
         setImmediate(cb);
     }
     
@@ -91,14 +102,13 @@ class GSM {
 				debug("waiting for response (%d tries)", counter);
 				response = await promise;
 				
-				debug("response:", response);
+				debug("response:", response, "valid:", response_valid(response));
 			}
 			catch (e) {
 				if (!(e instanceof NoResponseError)) {
 					throw e;
 				}
 			}
-			//gsm.parser.removeAllListeners('data');
 		}
 		return response;	
 	}
@@ -118,14 +128,14 @@ class GSM {
                 if (silence_timeout_id) {
                     clearTimeout(silence_timeout_id);
                 }
-                if (response_valid) {
+				debug("response:", response, "validator:", response_valid, response, "valid:", response_valid(response));
+                if (response_valid(response)) {
                     resolve(response);
                 }
-                silence_timeout_id = setTimeout(() => resolve(response), silence_timeout);
             });
             setTimeout(() => reject(new NoResponseError(cmd)), timeout);
         });
-        return promise.finally(() => { port.unpipe(parser); } )
+        return promise.finally(() => { debug("unpiping parser"); port.unpipe(parser); } )
     }
     
     async sendData(data) {
@@ -136,9 +146,12 @@ class GSM {
 
 	AT() { return this.command("AT", { timeout: 2000 }); }
 	
-	async loadCert(filename) {
-		var data = fs.readFileSync(filename);
-		return this.command(`AT+USECMNG=0,0,"testCA",${data.length}`);
+	async loadCert(type, filename) {
+		var label = "test";
+		var data = fs.readFileSync(filename).toString('binary');
+		await this.command(`AT+USECMNG=0,${type},"${label}",${data.length}`, { response_valid: response => response && response.prompt == '>' });
+		await this.sendData(data);
+		return this.receiveResponse("cert", has('code'), 10000);
 	}
 	
 	async writeFile(filename, data) {
@@ -158,7 +171,7 @@ function parse_response(data, response) {
 
 program.version("1.0.0");
 program.command("list").description("list all ports").action(list_ports);
-program.command("*").arguments("<port> [baudrate]").action(main)
+program.command("*").arguments("<type> <filename> <port> [baudrate]").action(main)
 program.parse(process.argv);
 
 async function list_ports() {
@@ -182,21 +195,18 @@ async function list_ports() {
 	}
 }
 
-async function main(port, baudrate) {
+async function main(type, filename, port, baudrate) {
 	var gsm = new GSM();
     try {
         await gsm.connect(port, +baudrate || 115200);
 	    await gsm.AT();
-	    //await gsm.AT();
-	    //await gsm.loadCert("/work/cert/ME8_PO00000008_Batch0001/3c8012db-0e00-4745-af0d-0ed7ff4cdcde/car_Cert.crt");
-	    //await gsm.command("ATI");
-	    await gsm.writeFile("test_file", "test content");
-	    await gsm.AT();
+		await gsm.command("AT+CMEE=2");
+		await gsm.loadCert(type, filename);
         console.log("Finished");
-        process.exit();
     } catch (e) {
         console.log(e);
     }
+	process.exit();
 }
 
 
