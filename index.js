@@ -9,7 +9,7 @@ const fs = require('fs');
 
 class NoResponseError extends Error {
     constructor(cmd) {
-        super(`no response on ${cmd}`);
+        super(`no response on ${cmd} command`);
         this.name = 'NoResponseError';
     }
 }
@@ -38,7 +38,12 @@ class ModemParser extends Transform {
 				var res = this.data.match(test[0]);
 				if (res) {
 					parsing = true;
-					console.log("< %s".bold.green, jsesc(res[0]).bold.green);
+					var error_match = res[0].match(/^\+CME ERROR:/);
+					if (error_match) {
+						console.log("< %s".bold.green, "+CME ERROR:".bold.red + jsesc(res[0].slice(error_match[0].length)).bold.green);
+					} else {
+						console.log("< %s".bold.green, jsesc(res[0]).bold.green);
+					}
 					var response = {}
 					for (var i = 1; i < test.length; i++) {
 						response[test[i]] = res[i];
@@ -79,7 +84,7 @@ class GSM {
         return new Promise((resolve, reject) =>{
             port.open(reject);
             port.on('open', resolve);
-		});
+		}).finally(() => { console.log("Connected to %s, baudrate=%d", path, baudrate) } );
     }
 	
 	async command(cmd, opts) {
@@ -105,7 +110,7 @@ class GSM {
 				debug("response:", response, "valid:", response_valid(response));
 			}
 			catch (e) {
-				if (!(e instanceof NoResponseError)) {
+				if (!(e instanceof NoResponseError) || repeat && counter >= repeat) {
 					throw e;
 				}
 			}
@@ -144,11 +149,10 @@ class GSM {
         return this.port.drain();
     }
 
-	AT() { return this.command("AT", { timeout: 2000 }); }
+	AT() { return this.command("AT", { timeout: 500, repeat: 10 }); }
 	
-	async loadCert(type, filename) {
+	async loadCert(type, data) {
 		var label = "test";
-		var data = fs.readFileSync(filename).toString('binary');
 		await this.command(`AT+USECMNG=0,${type},"${label}",${data.length}`, { response_valid: response => response && response.prompt == '>' });
 		await this.sendData(data);
 		return this.receiveResponse("cert", has('code'), 10000);
@@ -198,13 +202,19 @@ async function list_ports() {
 async function main(type, filename, port, baudrate) {
 	var gsm = new GSM();
     try {
+		var data = fs.readFileSync(filename).toString('binary');
+
         await gsm.connect(port, +baudrate || 115200);
 	    await gsm.AT();
 		await gsm.command("AT+CMEE=2");
-		await gsm.loadCert(type, filename);
-        console.log("Finished");
+		var result = await gsm.loadCert(type, data);
+		if (result.code == 0) {
+			console.log("The certificate is OK");
+		} else {
+			console.log("Invalid certificate");
+		}
     } catch (e) {
-        console.log(e);
+        console.log("ERROR:", e.message);
     }
 	process.exit();
 }
