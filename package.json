@@ -2,8 +2,9 @@
   "name": "modem-util",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
+    "main": ".main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": "./index.js",
@@ -12,6 +13,7 @@
   "dependencies": {
     "colors": "^1.2.4",
     "commander": "^2.15.1",
+    "data-table": "^2.0.0",
     "debug": "^3.1.0",
     "jsesc": "^2.5.1",
     "promise.prototype.finally": "^3.1.0",
