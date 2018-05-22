@@ -4,6 +4,7 @@ const debug = require('debug')('=D=');
 const SerialPort = require('serialport');
 const { Transform } = require('stream');
 const jsesc = require('jsesc');
+const { promisify } = require('util');
 
 class NoResponseError extends Error {
     constructor(cmd) {
@@ -14,9 +15,10 @@ class NoResponseError extends Error {
 
 class ModemParser extends Transform {
     constructor (opts) {
-        opts = Object.assign({}, opts, { readableObjectMode: true });
-        super(opts);
-        this.data = '';
+        opts = Object.assign({}, opts, { readableObjectMode: true })
+        super(opts)
+        this.log = opts.log
+        this.data = ''
     }
     
     _transform (chunk, encoding, cb) {
@@ -36,12 +38,7 @@ class ModemParser extends Transform {
 				var res = this.data.match(test[0]);
 				if (res) {
 					parsing = true;
-					var error_match = res[0].match(/^\+CME ERROR:/);
-					if (error_match) {
-						console.log("< %s".bold.green, "+CME ERROR:".bold.red + jsesc(res[0].slice(error_match[0].length)).bold.green);
-					} else {
-						console.log("< %s".bold.green, jsesc(res[0]).bold.green);
-					}
+                    this.log("< " + jsesc(res[0]));
 					var response = {}
 					for (var i = 1; i < test.length; i++) {
 						response[test[i]] = res[i];
@@ -70,11 +67,19 @@ function has (key) {
 
 
 class GSM {
-	constructor() {
-		this.silence_timeout = 20;
+	constructor(log) {
+        this.log = log
+		this.silence_timeout = 20
 	}
     
     async connect(path, baudrate) {
+        if (this.port && this.port.isOpen) {
+            debug("disconnecting from previous port");
+            await promisify(this.port.close).call(this.port)
+            this.log(`Disconnected from ${this.port.path}`)
+            this.port = null
+        }
+        
 		debug("connecting to %s, baudrate=%d", path, baudrate);
 		var port = new SerialPort(path, { baudRate: baudrate, autoOpen: false });
         this.port = port;
@@ -82,7 +87,7 @@ class GSM {
         return new Promise((resolve, reject) =>{
             port.open(reject);
             port.on('open', resolve);
-		}).finally(() => { console.log("Connected to %s, baudrate=%d", path, baudrate) } );
+		}).then(() => { this.log(`Connected to ${path}, baudrate=${baudrate}`) } );
     }
 	
 	async command(cmd, opts) {
@@ -98,9 +103,9 @@ class GSM {
 			try {
 				var promise = this.receiveResponse(cmd, response_valid, timeout);
                 
-				console.log("> %s".bold.yellow, jsesc(cmd + "\r").bold.yellow);
+				this.log("> " + jsesc(cmd + "\r"));
 				this.port.write(cmd + "\r");
-				await this.port.drain();
+				await promisify(this.port.drain).call(this.port);
 				counter++;
 				debug("waiting for response (%d tries)", counter);
 				response = await promise;
@@ -119,7 +124,7 @@ class GSM {
     receiveResponse(cmd, response_valid, timeout) {
         var silence_timeout = this.silense_timeout;
         var silence_timeout_id;
-        var parser = new ModemParser();
+        var parser = new ModemParser({log: this.log});
         var port = this.port;
         
         port.pipe(parser);

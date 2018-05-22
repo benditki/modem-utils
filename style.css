@@ -1,0 +1,19 @@
+body, nav, main, section, div, a, p, pre, h1 {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+#log {
+    background: #333;
+    height: 400px;
+    overflow: auto;
+}
+
+#log p {
+    padding-left: 55px;
+    text-indent: -50px;
+    color: #ccc;
+    font: 12pt consolas;
+    white-space: pre-wrap;
+}

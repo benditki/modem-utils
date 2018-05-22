@@ -1,15 +1,27 @@
 <!DOCTYPE html>
 <html>
-  <head>
+    <head>
+    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <title>Hello World!</title>
-  </head>
-  <body>
-    <div id="error"></div>
-    <div id="ports"></div>
-  </body>
+    </head>
 
-  <script>
+    <body>
+
+    <section id="header">
+        <button id="scan">Scan</button>
+        <select id="ports"></select>
+        <button id="connect">Connect</button>
+        <span id="error"></span>
+    </section>
+
+    <section id="log">
+        
+    </section>
+
+    </body>
+
+    <script>
     require('./renderer.js')
-  </script>
+    </script>
 </html>
