@@ -1,7 +1,142 @@
+@font-face {
+    font-family: 'Roboto-medium';
+    src: url('fonts/Roboto-Medium-webfont.woff');
+}
+
+@font-face {
+    font-family: 'Roboto-regular';
+    src: url('fonts/Roboto-Regular-webfont.woff');
+}
+
+@font-face {
+    font-family: 'pe-icon-7-stroke';
+    src: url('fonts/Pe-icon-7-stroke.woff');
+}
+
 body, nav, main, section, div, a, p, pre, h1 {
     box-sizing: border-box;
     padding: 0;
     margin: 0;
+}
+
+i {
+    display: inline-block;
+    font: normal normal normal 12px/1 'pe-icon-7-stroke';
+    font-size: inherit;
+    text-transform: none;
+    text-decoration: none;
+    text-align: center;
+    vertical-align: -25%;
+    -webkit-font-smoothing: antialiased;
+}
+
+button {
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    background: none;
+    padding: 8px;
+    margin: 0;
+    text-transform: uppercase;
+    font-family: Roboto-regular;
+    color: #0c2fb3;
+}
+
+button:hover {
+    border: 1px solid #222;
+}
+
+button i {
+    vertical-align: -5px;
+    padding-right: 10px;
+    font-size: 20px;
+}
+
+nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 250px;
+    padding-top: 20px;
+    background: linear-gradient(to bottom, rgba(29, 199, 234, 1.0) 0%, rgba(29, 199, 234, 0.97) 50%, rgba(64, 145, 255, 0.85) 100%);
+}
+
+nav.back {
+    background: no-repeat url('img/modem.jpg')  bottom/contain;
+}
+
+nav i {
+    font-size: 32px;
+    width: 32px;
+    margin: 0px 10px;
+}
+
+
+nav a {
+    
+    margin: 5px 15px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-family: Roboto-medium, sans-serif;
+    font-size: 12px;
+    color: white;
+    opacity: 0.9;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+nav a:hover {
+    background: rgba(255, 255, 255, 0.13);
+    opacity: 1;
+}
+
+nav a.active {
+    color: #FFFFFF;
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.23);
+}
+
+nav .caption {
+    font-family: Roboto-medium;
+    font-size: 24pt;
+    font-weight: bold;
+}
+
+main {
+    position: fixed;
+    left: 250px;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    overflow: auto;
+}
+
+section {
+    display: none;
+}
+
+section.active {
+    display: block;
+}
+
+
+header {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 5px;
+}
+
+footer {
+    position: relative;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }
 
 #log {

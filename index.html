@@ -8,16 +8,28 @@
 
     <body>
 
-    <section id="header">
-        <button id="scan">Scan</button>
-        <select id="ports"></select>
-        <button id="connect">Connect</button>
-        <span id="error"></span>
-    </section>
+    <nav class="back"></nav>
+    <nav>
+    <p class="caption">ModemUtils</p>
+    <a onclick="show('logs')" class="active"><i>&#xe69e;</i>Check connectivity</a>
+    <a onclick="show('settings')"><i>&#xe64b;</i>Guess baudrate</a>
+    <a onclick="show('settings')"><i>&#xe622;</i>Check certificate</a>
+    </nav>
 
-    <section id="log">
-        
-    </section>
+    <main>
+    
+    <header>
+        <button id="scan"><i>&#xe6c2;</i>Scan</button>
+        <select id="ports"></select>
+        <button id="connect"><i>&#xe624;</i>Connect</button>
+        <span id="error"></span>
+    </header>
+
+    <footer>
+    <div id="log"></div>
+    </footer>
+    
+    </main>
 
     </body>
 
