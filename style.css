@@ -13,10 +13,40 @@
     src: url('fonts/Pe-icon-7-stroke.woff');
 }
 
-body, nav, main, section, div, a, p, pre, h1 {
+@font-face {
+    font-family: 'Bungee-Regular';
+    src: url('fonts/Bungee-Regular.ttf');
+}
+
+* {
     box-sizing: border-box;
     padding: 0;
     margin: 0;
+}
+
+#grid {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.15;
+    background: url('img/grid80.png'), url('img/grid8.png');
+}
+
+#grid button {
+    background-color: white;
+    color: red;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+}
+
+#grid_on {
+    position: fixed;
+    right: 0;
+    bottom: 0;
 }
 
 i {
@@ -34,11 +64,15 @@ button {
     border-radius: 4px;
     border: 1px solid #bbb;
     background: none;
-    padding: 8px;
-    margin: 0;
+    padding: 0px 8px;
+    margin: 8px;
+    height: 32px;
     text-transform: uppercase;
     font-family: Roboto-regular;
     color: #0c2fb3;
+    font-size: 12px;
+    line-height: 20px;
+    width: 120px;
 }
 
 button:hover {
@@ -58,31 +92,25 @@ nav {
     position: fixed;
     top: 0;
     bottom: 0;
-    width: 250px;
-    padding-top: 20px;
-    background: linear-gradient(to bottom, rgba(29, 199, 234, 1.0) 0%, rgba(29, 199, 234, 0.97) 50%, rgba(64, 145, 255, 0.85) 100%);
+    width: 240px;
+    background: linear-gradient(to bottom, rgb(195, 160, 195) 0%, rgba(161, 149, 169, 0.97) 50%, rgba(156, 145, 183, 0.85) 100%);
 }
 
 nav.back {
     background: no-repeat url('img/modem.jpg')  bottom/contain;
 }
 
-nav i {
-    font-size: 32px;
-    width: 32px;
-    margin: 0px 10px;
-}
-
-
 nav a {
-    
-    margin: 5px 15px;
-    padding: 10px 15px;
+    margin: 8px 8px;
+    padding: 8px 8px;
+    width: 204px;
+    height: 64px;
+    line-height: 48px;
     border-radius: 4px;
     text-decoration: none;
     text-transform: uppercase;
     font-family: Roboto-medium, sans-serif;
-    font-size: 12px;
+    font-size: 16px;
     color: white;
     opacity: 0.9;
     cursor: pointer;
@@ -100,18 +128,30 @@ nav a.active {
     background: rgba(255, 255, 255, 0.23);
 }
 
-nav .caption {
-    font-family: Roboto-medium;
-    font-size: 24pt;
-    font-weight: bold;
+nav i {
+    font-size: 32px;
+    width: 32px;
+    margin: 0px 10px;
 }
+
+nav h1 {
+    font-family: Bungee-Regular;
+    font-size: 42px;
+    line-height: 48px;
+}
+
+nav h1 .A {  color: red; }
+nav h1 .B {  color: green; }
+nav h1 .C {  color: yellow; }
+nav h1 .D {  color: orange; }
+
 
 main {
     position: fixed;
-    left: 250px;
+    left: 240px;
     right: 0;
-    top: 0;
-    bottom: 0;
+    top: 48px;
+    bottom: 300px;
     overflow: auto;
 }
 
@@ -125,23 +165,31 @@ section.active {
 
 
 header {
-    position: relative;
+    position: fixed;
     top: 0;
-    left: 0;
+    left: 240px;
     right: 0;
-    padding: 5px;
+    height: 48px;
+}
+
+header #ports {
+    font-family: Roboto-regular;
+    font-size: 16px;
+    height: 24px;
+    width: 320px;
 }
 
 footer {
-    position: relative;
+    position: fixed;
     bottom: 0;
-    left: 0;
+    left: 240px;
     right: 0;
+    height: 300px;
 }
 
 #log {
     background: #333;
-    height: 400px;
+    height: 400px;;
     overflow: auto;
 }
 

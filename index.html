@@ -3,21 +3,19 @@
     <head>
     <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
-    <title>Hello World!</title>
+    <title>Modem Utils</title>
     </head>
 
     <body>
 
     <nav class="back"></nav>
     <nav>
-    <p class="caption">ModemUtils</p>
-    <a onclick="show('logs')" class="active"><i>&#xe69e;</i>Check connectivity</a>
-    <a onclick="show('settings')"><i>&#xe64b;</i>Guess baudrate</a>
-    <a onclick="show('settings')"><i>&#xe622;</i>Check certificate</a>
+    <h1><span class="A">.</span><span class="B">M</span><span class="C">U</span><span class="D">.</span></h1>
+    <a onclick="show('logs')" class="active"><i>&#xe69e;</i>Cloud</a>
+    <a onclick="show('settings')"><i>&#xe64b;</i>Baudrate</a>
+    <a onclick="show('settings')"><i>&#xe622;</i>Certificates</a>
     </nav>
 
-    <main>
-    
     <header>
         <button id="scan"><i>&#xe6c2;</i>Scan</button>
         <select id="ports"></select>
@@ -25,11 +23,17 @@
         <span id="error"></span>
     </header>
 
+    <main>
+    </main>
+    
     <footer>
     <div id="log"></div>
     </footer>
     
-    </main>
+    <button id="grid_on" onclick="document.getElementById('grid').style.display='block'">##</button>
+    <div id="grid">
+        <button onclick="document.getElementById('grid').style.display='none'">##</button>
+    </div>
 
     </body>
 
