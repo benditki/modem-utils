@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
     <head>
-    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <title>Modem Utils</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="funcs.js"></script>
     </head>
 
     <body>
@@ -11,29 +13,30 @@
     <nav class="back"></nav>
     <nav>
     <h1><span class="A">.</span><span class="B">M</span><span class="C">U</span><span class="D">.</span></h1>
-    <a onclick="show('logs')" class="active"><i>&#xe69e;</i>Cloud</a>
-    <a onclick="show('settings')"><i>&#xe64b;</i>Baudrate</a>
-    <a onclick="show('settings')"><i>&#xe622;</i>Certificates</a>
+    <a onclick="show('modem')" class="active"><i>&#xe61e;</i>Modem</a>
+    <a onclick="show('cloud')"><i>&#xe66a;</i>Cloud</a>
+    <a onclick="show('certificates')"><i>&#xe62e;</i>Certificates</a>
     </nav>
 
     <header>
         <button id="scan"><i>&#xe6c2;</i>Scan</button>
-        <select id="ports"></select>
+        <div id="ports-wrap" class="select-wrap"><select id="ports"></select></div>
         <button id="connect"><i>&#xe624;</i>Connect</button>
         <span id="error"></span>
     </header>
 
     <main>
+      <section id="modem" class="active"><h1>Modem configuration and state</h1></section>
+      <section id="cloud"><h1>Cloud connectivity tests</h1></section>
+      <section id="certificates"><h1>Certificate tests</h1></section>
     </main>
     
     <footer>
     <div id="log"></div>
     </footer>
     
-    <button id="grid_on" onclick="document.getElementById('grid').style.display='block'">##</button>
-    <div id="grid">
-        <button onclick="document.getElementById('grid').style.display='none'">##</button>
-    </div>
+    <div id="grid"></div>
+    <button id="grid-toggle">##</button>
 
     </body>
 

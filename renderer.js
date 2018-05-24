@@ -13,18 +13,18 @@ function scan_ports() {
     serialport.list((err, ports) => {
         console.log('scanned ports', ports)
         if (err) {
-            document.getElementById('error').textContent = err.message
+            $('error').textContent = err.message
             return
         } else {
-            document.getElementById('error').textContent = ''
+            $('error').textContent = ''
         }
 
         if (ports.length === 0) {
-            document.getElementById('error').textContent = 'No ports discovered'
+            $('error').textContent = 'No ports discovered'
             return
         }
         
-        var elem = document.getElementById("ports")
+        var elem = $("ports")
         while (elem.options.length > 0) {                
             elem.remove(0);
         }   
@@ -40,7 +40,7 @@ function scan_ports() {
 
 async function connect() {
     try {
-        var elem = document.getElementById("ports")
+        var elem = $("ports")
         var port = elem.options[elem.selectedIndex].value;
         
         await gsm.connect(port, 115200);
@@ -54,12 +54,19 @@ async function connect() {
 function log(msg) {
     var p = document.createElement("p")
     p.innerText = msg
-    var elem = document.getElementById('log')
+    var elem = $('log')
     elem.appendChild(p)
     elem.scrollTop = elem.scrollHeight
+}
+
+function toggle_grid() {
+    $('grid-toggle').classList.toggle('off')
+    $('grid').classList.toggle('shown')
 }
     
 
 scan_ports()
-document.getElementById('scan').addEventListener("click", scan_ports)
-document.getElementById('connect').addEventListener("click", connect)
+$('scan').addEventListener("click", scan_ports)
+$('connect').addEventListener("click", connect)
+
+$('grid-toggle').addEventListener('click', toggle_grid)
