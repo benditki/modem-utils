@@ -17,14 +17,38 @@
     <a onclick="show('cloud')"><i>&#xe66a;</i>Cloud</a>
     <a onclick="show('certificates')"><i>&#xe62e;</i>Certificates</a>
     </nav>
-
-    <header>
-        <button id="scan"><i>&#xe6c2;</i>Scan</button>
-        <div id="ports-wrap" class="select-wrap"><select id="ports"></select></div>
-        <button id="connect"><i>&#xe624;</i>Connect</button>
-        <span id="error"></span>
+ 
+    <header id="header">
     </header>
 
+    <script id='header-tpl' type='text/ractive'>
+        <button on-click=['scan_ports']><i>&#xe6c2;</i>Scan</button>
+        
+        {{#if ports}}
+        <div id="ports-wrap" class="select-wrap">
+        <select id="ports" value="{{selected_port}}">
+        {{#each ports}}
+            <option value="{{comName}}">{{comName + ": " + manufacturer + (serialNumber ? "-" + serialNumber : "")}}</option>
+        {{/each}}
+        </select>
+        </div>
+        
+        {{#if connecting}}
+        <button on-click="['abort']"><i>&#xe681;</i>Abort</button>
+        {{elseif connected_port != selected_port}}
+        <button on-click="['connect', selected_port]"><i>&#xe624;</i>Connect</button>
+        {{elseif connected_port}}
+        <button on-click="['disconnect']"><i>&#xe681;</i>Disconn</button>
+        <button on-click="['connect', connected_port]"><i>&#xe61c;</i>Reconn</button>
+        {{/if}}
+        
+        {{else}}
+        No ports discovered
+        {{/if}}
+        
+        {{#if scan_error}}{{scan_error.message}}{{/if}}
+    </script>
+    
     <main>
       <section id="modem" class="active"><h1>Modem configuration and state</h1></section>
       <section id="cloud"><h1>Cloud connectivity tests</h1></section>

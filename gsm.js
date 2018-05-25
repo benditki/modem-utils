@@ -71,20 +71,24 @@ class GSM {
         this.log = log
 		this.silence_timeout = 20
 	}
-    
-    async connect(path, baudrate) {
+
+
+    async disconnect () {
         if (this.port && this.port.isOpen) {
             debug("disconnecting from previous port");
             await promisify(this.port.close).call(this.port)
             this.log(`Disconnected from ${this.port.path}`)
             this.port = null
         }
-        
+    }
+
+    async connect(path, baudrate) {
+        await this.disconnect();
 		debug("connecting to %s, baudrate=%d", path, baudrate);
 		var port = new SerialPort(path, { baudRate: baudrate, autoOpen: false });
         this.port = port;
 
-        return new Promise((resolve, reject) =>{
+        return new Promise((resolve, reject) => {
             port.open(reject);
             port.on('open', resolve);
 		}).then(() => { this.log(`Connected to ${path}, baudrate=${baudrate}`) } );
@@ -152,7 +156,7 @@ class GSM {
         return this.port.drain();
     }
 
-	AT() { return this.command("AT", { timeout: 500, repeat: 10 }); }
+	AT() { return this.command("AT", { timeout: 200, repeat: 5 }); }
 	
 	async loadCert(type, data) {
 		var label = "test";

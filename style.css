@@ -26,6 +26,10 @@
 
 textarea, input, button, select { outline: none; }
 
+body {
+    font-family: 'Roboto-regular';
+}
+
 i {
     display: inline-block;
     font: normal normal normal 12px/1 'pe-icon-7-stroke';
@@ -44,6 +48,7 @@ button {
     padding: 0px 8px;
     margin: 8px;
     height: 32px;
+    text-align: left;
     text-transform: uppercase;
     font-family: Roboto-regular;
     color: #0c2fb3;
