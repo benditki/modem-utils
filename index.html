@@ -10,18 +10,22 @@
 
     <body>
 
+    <div id="container"></div>
+ 
+    <script id='header-tpl' type='text/ractive'>
+
     <nav class="back"></nav>
     <nav>
-    <h1><span class="A">.</span><span class="B">M</span><span class="C">U</span><span class="D">.</span></h1>
-    <a onclick="show('modem')" class="active"><i>&#xe61e;</i>Modem</a>
-    <a onclick="show('cloud')"><i>&#xe66a;</i>Cloud</a>
-    <a onclick="show('certificates')"><i>&#xe62e;</i>Certificates</a>
+        <h1><span class="A">.</span><span class="B">M</span><span class="C">U</span><span class="D">.</span></h1>
+        <!--{{#each sections}}
+        <a on-click="{{['show', name]}}" class="{{active? 'active': ''}}"><i>{{icon}}</i>{{name}}</a>
+        {{/each}}-->
+        <a onclick="show('modem')" class="active"><i>&#xe61e;</i>Modem</a>
+        <a onclick="show('cloud')"><i>&#xe66a;</i>Cloud</a>
+        <a onclick="show('certificates')"><i>&#xe62e;</i>Certificates</a>
     </nav>
- 
-    <header id="header">
-    </header>
 
-    <script id='header-tpl' type='text/ractive'>
+    <header id="header">
         <button on-click=['scan_ports']><i>&#xe6c2;</i>Scan</button>
         
         {{#if ports}}
@@ -47,20 +51,42 @@
         {{/if}}
         
         {{#if scan_error}}{{scan_error.message}}{{/if}}
-    </script>
-    
+    </header>
+
     <main>
-      <section id="modem" class="active"><h1>Modem configuration and state</h1></section>
-      <section id="cloud"><h1>Cloud connectivity tests</h1></section>
-      <section id="certificates"><h1>Certificate tests</h1></section>
+        <section id="modem" class="active">
+            <h1>Modem configuration and state</h1>
+            {{#if connected_port}}
+            <table>
+            <tr><th colspan="2">Modem parameters</th></tr>
+            <tr><td>Model:</td><td>{{modem.model}}</td></tr>
+            <tr><td>SN:</td><td>{{modem.sn}}</td></tr>
+            <tr><th colspan="2">SIM card</th></tr>
+            {{#if sim}}
+            <tr><td>ID:</td><td>{{sim.id}}</td></tr>
+            <tr><th colspan="2">Network</th></tr>
+            <tr><td>Operator</td><td>{{operator}}</td>
+            <tr><td>Type</td><td>{{network}}</td>
+            {{else}}
+            <tr><td colspan="2">no SIM is inserted</td></tr>
+            {{/if}}
+            <tr><td></td><td></td></tr>
+            </table>
+            {{/if}}
+        </section>
+        <section id="cloud"><h1>Cloud connectivity tests</h1></section>
+        <section id="certificates"><h1>Certificate tests</h1></section>
     </main>
     
     <footer>
-    <div id="log"></div>
+        <div id="log"></div>
     </footer>
     
     <div id="grid"></div>
     <button id="grid-toggle">##</button>
+
+    </script>
+    
 
     </body>
 

@@ -13,6 +13,19 @@ class NoResponseError extends Error {
     }
 }
 
+function parse_network(num) {
+    switch (num) {
+        case "0": return { network: "GSM" }
+        case "1": return { network: "GSM COMPACT" }
+        case "2": return { network: "UTRAN (UMTS)" }
+        case "3": return { network: "GSM with EDGE availability" }
+        case "4": return { network: "UTRAN with HSDPA availability" }
+        case "5": return { network: "UTRAN with HSUPA availability" }
+        case "6": return { network: "UTRAN with HSDPA and HSUPA availability" }
+        case "7": return { network: "LTE" }
+    }
+}
+
 class ModemParser extends Transform {
     constructor (opts) {
         opts = Object.assign({}, opts, { readableObjectMode: true })
@@ -27,7 +40,9 @@ class ModemParser extends Transform {
         var tests = [
             [/^\n?(>)/, "prompt"],
 			[/^\+CME ERROR: (.*)[\r\n]+/, "error"],
-            [/^([0-9])[\r\n]*/, "code"],
+            [/^\+CCID: (\d+)\r\n/, "sim_id"],
+            [/^\+UCGOPS: (\d+),(\d+),(".*"),(\d+)\r\n/, "status", "format", "operator", parse_network],
+            [/^([0-9])\r/, "code"],
 			[/^(.+?)[\r\n]+/, "body"]
         ];
 		var parsing = true;
@@ -41,7 +56,12 @@ class ModemParser extends Transform {
                     this.log("< " + jsesc(res[0]));
 					var response = {}
 					for (var i = 1; i < test.length; i++) {
-						response[test[i]] = res[i];
+                        debug("typeof test[i] ==", typeof test[i])
+                        if (typeof test[i] == "function") {
+                            Object.assign(response, test[i](res[i]))
+                        } else {
+                            response[test[i]] = res[i];
+                        }
 					}
 					if (typeof response.error !== 'undefined') {
 						response.code = 4;
@@ -55,6 +75,7 @@ class ModemParser extends Transform {
     }
     
     _flush(cb) {
+        this.log("< " + jsesc(this.data));
         this.push(this.data);
         this.data = '';
         setImmediate(cb);
