@@ -5,7 +5,6 @@
     <title>Modem Utils</title>
     
     <link rel="stylesheet" href="style.css">
-    <script src="funcs.js"></script>
     </head>
 
     <body>
@@ -17,12 +16,9 @@
     <nav class="back"></nav>
     <nav>
         <h1><span class="A">.</span><span class="B">M</span><span class="C">U</span><span class="D">.</span></h1>
-        <!--{{#each sections}}
-        <a on-click="{{['show', name]}}" class="{{active? 'active': ''}}"><i>{{icon}}</i>{{name}}</a>
-        {{/each}}-->
-        <a onclick="show('modem')" class="active"><i>&#xe61e;</i>Modem</a>
-        <a onclick="show('cloud')"><i>&#xe66a;</i>Cloud</a>
-        <a onclick="show('certificates')"><i>&#xe62e;</i>Certificates</a>
+        {{#each sections}}
+        <a on-click="@.set('active_section', name)" class="{{active_section == name? 'active' : ''}}"><i>{{{icon}}}</i>{{name}}</a>
+        {{/each}}
     </nav>
 
     <header id="header">
@@ -54,7 +50,7 @@
     </header>
 
     <main>
-        <section id="modem" class="active">
+        <section class="{{active_section == 'modem'? 'active' : ''}}">
             <h1>Modem configuration and state</h1>
             {{#if connected_port}}
             <table>
@@ -74,16 +70,20 @@
             </table>
             {{/if}}
         </section>
-        <section id="cloud"><h1>Cloud connectivity tests</h1></section>
-        <section id="certificates"><h1>Certificate tests</h1></section>
+        <section class="{{active_section == 'cloud'? 'active' : ''}}">
+            <h1>Cloud connectivity tests</h1>
+        </section>
+        <section class="{{active_section == 'certificates'? 'active' : ''}}">
+            <h1>Certificate tests</h1>
+        </section>
     </main>
     
     <footer>
         <div id="log"></div>
     </footer>
     
-    <div id="grid"></div>
-    <button id="grid-toggle">##</button>
+    <div id="grid" class="{{grid_visible? 'shown' : ''}}"></div>
+    <button id="grid-toggle" on-click="@.toggle('grid_visible')" class="{{grid_visible? 'off' : ''}}">##</button>
 
     </script>
     

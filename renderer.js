@@ -5,15 +5,30 @@ var gsm = new GSM(log)
 
 localStorage.debug = "=D="
 
+function $(id) { return document.getElementById(id) }
+
+var sections = [
+    { name: 'modem',        icon: '&#xe61e;' },
+    { name: 'cloud',        icon: '&#xe66a;' },
+    { name: 'certificates', icon: '&#xe62e;' }
+]
+
+
 var ractive = new Ractive({
     el: 'container',
     template: '#header-tpl',
+    data: {
+        sections,
+        active_section: 'modem',
+        show_grid: false
+    }
 });
 
 ractive.on({
     connect,
     disconnect,
-    scan_ports })
+    scan_ports
+})
 scan_ports()
 
 function scan_ports() {
@@ -73,17 +88,14 @@ async function get_info(context) {
 function log(msg) {
     var p = document.createElement("p")
     p.innerText = msg
+    if (msg.startsWith('> ')) {
+        p.classList.add('sent')
+    } else if (msg.startsWith('< ')) {
+        p.classList.add('received')
+    } else if (msg.startsWith('ERROR: ')) {
+        p.classList.add('error')
+    }
     var elem = $('log')
     elem.appendChild(p)
     elem.scrollTop = elem.scrollHeight
 }
-
-function toggle_grid() {
-    $('grid-toggle').classList.toggle('off')
-    $('grid').classList.toggle('shown')
-}
-    
-$('grid-toggle').addEventListener('click', toggle_grid)
-
-
-

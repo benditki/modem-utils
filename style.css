@@ -235,6 +235,16 @@ footer {
     white-space: pre-wrap;
 }
 
+#log p.sent {
+    color: #9d8;
+}
+#log p.received {
+    color: #ec5;
+}
+#log p.error {
+    color: #f87;
+}
+
 #grid {
     display: none;
     position: fixed;
