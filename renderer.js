@@ -1,4 +1,5 @@
 const serialport = require('serialport')
+const fs = require('fs')
 const Ractive = require('ractive')
 const GSM = require('./gsm.js')
 var gsm = new GSM(log)
@@ -24,10 +25,14 @@ var ractive = new Ractive({
     }
 });
 
+window.ractive = ractive
+
 ractive.on({
     connect,
     disconnect,
-    scan_ports
+    scan_ports,
+    validate_cert,
+    update_cert_path
 })
 scan_ports()
 
@@ -85,6 +90,26 @@ async function get_info(context) {
     }       
 }
 
+async function validate_cert(context, cert_name) {
+    try {
+        var cert_path = ractive.get(cert_name + '.path')
+        var cert_type = ractive.get(cert_name + '.type')
+        var data = fs.readFileSync(cert_path).toString('binary')
+        var response = await gsm.loadCert(cert_type, data)
+        ractive.set(cert_name + ".tested", true)
+        console.log(response)
+        if (response.code == "0") {
+            ractive.set(cert_name + ".valid", true)
+            ractive.set(cert_name + ".md5", response.md5)
+        } else {
+            ractive.set(cert_name + ".valid", false)
+        }
+    }
+    catch (e) {
+        log("ERROR: " + e.message)
+    }       
+}
+
 function log(msg) {
     var p = document.createElement("p")
     p.innerText = msg
@@ -99,3 +124,11 @@ function log(msg) {
     elem.appendChild(p)
     elem.scrollTop = elem.scrollHeight
 }
+
+
+function update_cert_path(context) {
+    ractive.set('cert.path', context.node.files[0].path)
+    var elem = context.node.parentNode.file_path
+    elem.scrollLeft = elem.scrollWidth
+}
+

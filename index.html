@@ -70,12 +70,35 @@
             </table>
             {{/if}}
         </section>
+        {{#if connected_port}}
         <section class="{{active_section == 'cloud'? 'active' : ''}}">
             <h1>Cloud connectivity tests</h1>
         </section>
         <section class="{{active_section == 'certificates'? 'active' : ''}}">
             <h1>Certificate tests</h1>
+            <form on-change="@.set('cert.tested', false)">
+                <select value="{{cert.type}}">
+                    <option value="0">Root CA certificate</option>
+                    <option value="1">Client certificate</option>
+                    <option value="2">Client private key</option>
+                </select>
+                <input id="cert_file" type="file" name="file" hidden on-change="['update_cert_path']">
+                <input class="file" name="file_path" placeholder="Enter file name" value="{{cert.path}}">
+                <button type="button" class="narrow" onclick="file.click()"><i>&#xe632;</i></button>
+                {{#if cert.path}}
+                {{#if cert.tested}}
+                {{#if cert.valid}}
+                <output><i class="good">&#xe66c;</i><tt>{{cert.md5}}</tt></output>
+                {{else}}
+                <output><i class="bad">&#xe681;</i>
+                {{/if}}
+                {{else}}
+                <button type="button" on-click="['validate_cert', 'cert']"><i>&#xe685;</i>Validate</button>
+                {{/if}}
+                {{/if}}
+            </form>
         </section>
+        {{/if}}
     </main>
     
     <footer>

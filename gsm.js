@@ -42,6 +42,7 @@ class ModemParser extends Transform {
 			[/^\+CME ERROR: (.*)[\r\n]+/, "error"],
             [/^\+CCID: (\d+)\r\n/, "sim_id"],
             [/^\+UCGOPS: (\d+),(\d+),(".*"),(\d+)\r\n/, "status", "format", "operator", parse_network],
+            [/^\+USECMNG: \d+,\d+,".*","(.*)"\r\n/, "md5"],
             [/^([0-9])\r/, "code"],
 			[/^(.+?)[\r\n]+/, "body"]
         ];
@@ -173,7 +174,7 @@ class GSM {
     
     async sendData(data) {
         this.port.write(data);
-        console.log("> %s".bold.yellow, jsesc(data).bold.yellow);
+        this.log("> " + jsesc(data));
         return this.port.drain();
     }
 

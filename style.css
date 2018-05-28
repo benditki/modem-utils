@@ -75,6 +75,44 @@ button i {
     font-size: 20px;
 }
 
+button.narrow {
+    width: 40px;
+    text-align: center;
+}
+
+button.narrow i {
+    padding: 0;
+}
+
+form input, form select {
+    font-family: 'Roboto-regular';
+    font-size: 16px;
+    height: 32px;
+    margin: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    padding: 0px 8px;
+    vertical-align: top;
+}
+
+form input.file {
+    width: 480px;
+}
+
+output i {
+    font-size: 40px;
+    vertical-align: middle;
+}
+
+output i.good {
+    color: green
+}
+
+output i.bad {
+    color: red
+}
+
+
 nav {
     display: flex;
     flex-direction: column;
