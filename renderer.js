@@ -4,7 +4,7 @@ const Ractive = require('ractive')
 const GSM = require('./gsm.js')
 var gsm = new GSM(log)
 
-localStorage.debug = "=D="
+//localStorage.debug = "=D="
 
 function $(id) { return document.getElementById(id) }
 
@@ -21,7 +21,8 @@ var ractive = new Ractive({
     data: {
         sections,
         active_section: 'modem',
-        show_grid: false
+        show_grid: false,
+        cert: {}
     }
 });
 
@@ -90,19 +91,17 @@ async function get_info(context) {
     }       
 }
 
-async function validate_cert(context, cert_name) {
+async function validate_cert(context) {
     try {
-        var cert_path = ractive.get(cert_name + '.path')
-        var cert_type = ractive.get(cert_name + '.type')
-        var data = fs.readFileSync(cert_path).toString('binary')
-        var response = await gsm.loadCert(cert_type, data)
-        ractive.set(cert_name + ".tested", true)
+        var data = fs.readFileSync(context.get('path')).toString('binary')
+        var response = await gsm.loadCert(context.get('type'), data)
+        context.set(".checked", true)
         console.log(response)
         if (response.code == "0") {
-            ractive.set(cert_name + ".valid", true)
-            ractive.set(cert_name + ".md5", response.md5)
+            context.set("valid", true)
+            context.set("md5", response.md5)
         } else {
-            ractive.set(cert_name + ".valid", false)
+            context.set("valid", false)
         }
     }
     catch (e) {
@@ -127,8 +126,10 @@ function log(msg) {
 
 
 function update_cert_path(context) {
-    ractive.set('cert.path', context.node.files[0].path)
-    var elem = context.node.parentNode.file_path
-    elem.scrollLeft = elem.scrollWidth
+    if (context.node.files.length) {
+        context.set('path', context.node.files[0].path)
+        var elem = context.node.parentNode.file_path
+        elem.scrollLeft = elem.scrollWidth
+    }
 }
 
