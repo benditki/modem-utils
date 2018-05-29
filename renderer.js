@@ -4,7 +4,7 @@ const Ractive = require('ractive')
 const GSM = require('./gsm.js')
 var gsm = new GSM(log)
 
-//localStorage.debug = "=D="
+localStorage.debug = "" //"=D="
 
 function $(id) { return document.getElementById(id) }
 
@@ -22,7 +22,8 @@ var ractive = new Ractive({
         sections,
         active_section: 'modem',
         show_grid: false,
-        cert: {}
+        cert: {},
+        url: "http://34.230.62.7"
     }
 });
 
@@ -33,7 +34,8 @@ ractive.on({
     disconnect,
     scan_ports,
     validate_cert,
-    update_cert_path
+    update_cert_path,
+    http
 })
 scan_ports()
 
@@ -63,7 +65,7 @@ async function connect(context, port_name) {
         ractive.set('connected_port', port_name)
         await gsm.AT()
         ractive.set('connecting', false)
-        
+
         return get_info(context)
     }
     catch (e) {
@@ -88,7 +90,7 @@ async function get_info(context) {
     }
     catch (e) {
         log("ERROR: " + e.message)
-    }       
+    }
 }
 
 async function validate_cert(context) {
@@ -106,7 +108,25 @@ async function validate_cert(context) {
     }
     catch (e) {
         log("ERROR: " + e.message)
-    }       
+    }
+}
+
+async function http(context, method, url) {
+    try {
+        context.set('http_error', null)
+        context.set('http_response', null)
+        context.set('sending', true)
+        var response = await gsm.http(method, url)
+        if (response.http_error) {
+            context.set('http_error', response.http_error)
+        } else {
+            context.set('http_response', response.content)
+        }
+    }
+    catch (e) {
+        log("ERROR: " + e.message)
+    }
+    context.set('sending', false)
 }
 
 function log(msg) {

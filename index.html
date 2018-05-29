@@ -73,6 +73,17 @@
         {{#if connected_port}}
         <section class="{{active_section == 'cloud'? 'active' : ''}}">
             <h1>Cloud connectivity tests</h1>
+            <form>
+                <select value="{{method}}"><option>GET</option></select>
+                <input value="{{url}}">
+                <button type="button" on-click="['http', method, url]">
+                    {{#if sending}}<i class="loader"></i>{{else}}<i>&#xe629;</i>{{/if}}Send
+                </button>
+                <output>
+                    {{#if http_error}}<p class="error"><i class="bad">&#xe681;</i>{{http_error}}</p>{{/if}}
+                    {{#if http_response}}<pre>{{http_response}}</pre>{{/if}}
+                </output>
+            </form>
         </section>
         <section class="{{active_section == 'certificates'? 'active' : ''}}">
             <h1>Certificate tests</h1>
@@ -88,11 +99,13 @@
                 <button type="button" class="narrow" onclick="file.click()"><i>&#xe632;</i></button>
                 {{#if path}}
                 {{#if checked}}
+                <output>
                 {{#if valid}}
-                <output><i class="good">&#xe66c;</i><tt>{{md5}}</tt></output>
+                <i class="good">&#xe66c;</i><tt>{{md5}}</tt>
                 {{else}}
                 <output><i class="bad">&#xe681;</i>
                 {{/if}}
+                </output>
                 {{else}}
                 <button type="button" on-click="['validate_cert']"><i>&#xe685;</i>Validate</button>
                 {{/if}}
