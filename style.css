@@ -118,6 +118,7 @@ form input.file {
 output i {
     font-size: 40px;
     vertical-align: middle;
+    margin-right: 8px;
 }
 
 output pre, output p {
@@ -127,17 +128,18 @@ output pre, output p {
     border-radius: 4px;
 }
 
-output p.error {
-    border-color: red;
-    background-color: #fee;
-}
 
-output i.good {
+output .good {
     color: green
 }
 
-output i.bad {
+output .bad {
     color: red
+}
+
+output p.error {
+    border-color: red;
+    background-color: #fee;
 }
 
 
