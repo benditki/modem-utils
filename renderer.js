@@ -64,6 +64,7 @@ async function connect(context, port_name) {
         await gsm.connect(port_name, 115200)
         ractive.set('connected_port', port_name)
         await gsm.AT()
+        await gsm.command("AT+CMEE=2")
         ractive.set('connecting', false)
 
         return get_info(context)
@@ -87,6 +88,17 @@ async function get_info(context) {
         response = await gsm.command("AT+UCGOPS?")
         ractive.set("operator", response.operator)
         ractive.set("network", response.network)
+
+        var response = await gsm.command("AT+UPSND=0,8")
+        if (response.status == "1") {
+            await gsm.command("AT+UPSDA=0,4")
+        }
+        response = await gsm.command("AT+UPSDA=0,2;+UPSD=0,1;+UPSD=0,7;+UPSDA=0,3;+UPSND=0,0")
+        console.log(response)
+        ractive.set("stored_apn", response.apn)
+        ractive.set("current_apn", response.apn)
+        ractive.set("stored_ip", response.stored_ip)
+        ractive.set("current_ip", response.ip)
     }
     catch (e) {
         log("ERROR: " + e.message)

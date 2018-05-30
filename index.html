@@ -61,8 +61,14 @@
             {{#if sim}}
             <tr><td>ID:</td><td>{{sim.id}}</td></tr>
             <tr><th colspan="2">Network</th></tr>
-            <tr><td>Operator</td><td>{{operator}}</td>
-            <tr><td>Type</td><td>{{network}}</td>
+            <tr><td>Operator</td><td>{{operator}}</td></tr>
+            <tr><td>Type</td><td>{{network}}</td></tr>
+            {{#if current_apn}}
+            <tr><th colspan="2">Connection</th></tr>
+            <tr><td>APN</td><td><input value="{{current_apn}}">{{#if current_apn != stored_apn}}<button on-click=['store_apn']><i>&#xe65c;</i>Store</button>{{/if}}</td></tr>
+            <tr><td>Predefined IP</td><td>{{stored_ip}}</td></tr>
+            <tr><td>Received IP</td><td>{{current_ip}}</td></tr>
+            {{/if}}
             {{else}}
             <tr><td colspan="2">no SIM is inserted</td></tr>
             {{/if}}

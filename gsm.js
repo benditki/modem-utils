@@ -75,6 +75,9 @@ class ModemParser extends Transform {
             [/^\+UUHTTPCR: 0,\d+,(\d+)\r/, "http_result"],
             [parse_file_read, "content"],
             [/^\+UHTTPER: \d+,(\d+),(\d+)\r\n/, parse_error_class, parse_error_code],
+            [/^\+UPSD: 0,1,"(.*)"\r\n/, "apn"],
+            [/^\+UPSD: 0,7,"(.*)"\r\n/, "stored_ip"],
+            [/^\+UPSND: 0,0,"(.*)"\r\n/, "ip"],
             [/^([0-9])\r/, "code"],
             [/^(.+?)[\r\n]+/, "body"]
         ];
