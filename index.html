@@ -5,6 +5,7 @@
     <title>Modem Utils</title>
     
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="anim.css">
     </head>
 
     <body>
@@ -52,7 +53,7 @@
     <main>
         <section class="{{active_section == 'modem'? 'active' : ''}}">
             <h1>Modem configuration and state</h1>
-            {{#if connected_port}}
+            {{#if connected_port && modem}}
             <table>
             <tr><th colspan="2">Modem parameters</th></tr>
             <tr><td>Model:</td><td>{{modem.model}}</td></tr>
@@ -60,6 +61,7 @@
             <tr><th colspan="2">SIM card</th></tr>
             {{#if sim}}
             <tr><td>ID:</td><td>{{sim.id}}</td></tr>
+            {{#if operator}}
             <tr><th colspan="2">Network</th></tr>
             <tr><td>Operator</td><td>{{operator}}</td></tr>
             <tr><td>Type</td><td>{{network}}</td></tr>
@@ -67,7 +69,14 @@
             <tr><th colspan="2">Connection</th></tr>
             <tr><td>APN</td><td><input value="{{current_apn}}">{{#if current_apn != stored_apn}}<button on-click=['store_apn']><i>&#xe65c;</i>Store</button>{{/if}}</td></tr>
             <tr><td>Predefined IP</td><td>{{stored_ip}}</td></tr>
+            {{#if current_ip}}
             <tr><td>Received IP</td><td>{{current_ip}}</td></tr>
+            {{else}}
+            <tr><td colspan="2" style="text-align:center">{{{@.waiting("Activating GPRS")}}}</td></tr>
+            {{/if}}
+            {{/if}}
+            {{else}}
+            <tr><td colspan="2" style="text-align:center">{{{@.waiting("Registering to the network")}}}</td></tr>
             {{/if}}
             {{else}}
             <tr><td colspan="2">no SIM is inserted</td></tr>

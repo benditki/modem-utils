@@ -87,7 +87,7 @@ button:hover {
 
 button i {
     vertical-align: -5px;
-    margin-right: 10px;
+    margin-right: 8px;
     font-size: 20px;
 }
 
@@ -98,6 +98,13 @@ button.narrow {
 
 button.narrow i {
     padding: 0;
+}
+
+td button {
+    height: 20px;
+    margin: 0px 8px;
+    padding: 1px;
+    vertical-align: middle
 }
 
 form input, form select {
@@ -287,6 +294,11 @@ footer {
     left: 240px;
     right: 0;
     height: 400px;
+}
+
+.progress {
+    letter-spacing: 2px;
+    margin: 0px 16px;
 }
 
 #log {

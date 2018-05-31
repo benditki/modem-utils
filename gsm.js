@@ -78,6 +78,7 @@ class ModemParser extends Transform {
             [/^\+UPSD: 0,1,"(.*)"\r\n/, "apn"],
             [/^\+UPSD: 0,7,"(.*)"\r\n/, "stored_ip"],
             [/^\+UPSND: 0,0,"(.*)"\r\n/, "ip"],
+            [/^\+CGATT: (\d+)\r\n/, "gprs_attached"],
             [/^([0-9])\r/, "code"],
             [/^(.+?)[\r\n]+/, "body"]
         ];

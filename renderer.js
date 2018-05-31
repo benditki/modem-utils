@@ -19,14 +19,24 @@ var ractive = new Ractive({
     el: 'container',
     template: '#header-tpl',
     data: {
+        selected_port: localStorage.selected_port,
         sections,
         active_section: 'modem',
         show_grid: false,
         cert: {},
         url: "http://34.230.62.7"
+    },
+
+    waiting: (label) => { return `
+        <i class="la-line-scale-pulse-out-rapid la-dark la-sm"><div></div><div></div><div></div><div></div><div></div></i>
+        <span class="progress">${label}</span>
+        <i class="la-line-scale-pulse-out-rapid la-dark la-sm"><div></div><div></div><div></div><div></div><div></div></i>`
     }
 });
 
+window.onbeforeunload = function () {
+    localStorage.selected_port = ractive.get('selected_port')
+}
 window.ractive = ractive
 
 ractive.on({
@@ -79,25 +89,38 @@ async function connect(context, port_name) {
 
 async function get_info(context) {
     try {
-        var response = await gsm.command("ATI")
+        var response;
+        ractive.set( { operator: null, network: null, gprs_attached: null } )
+        response = await gsm.command("ATI;+GSN;+CCID")
         ractive.set("modem.model", response.body)
-        response = await gsm.command("AT+GSN")
         ractive.set("modem.sn", response.body)
-        response = await gsm.command("AT+CCID")
         ractive.set("sim.id", response.sim_id)
-        response = await gsm.command("AT+UCGOPS?")
+
+        response = await gsm.command("AT+UCGOPS?;+CGATT?", {
+            response_valid: response => response && response.operator && response.network && response.gprs_attached == "1",
+            timeout: 2000
+        })
         ractive.set("operator", response.operator)
         ractive.set("network", response.network)
+        ractive.set("gprs_attached", response.gprs_attached == "1")
 
-        var response = await gsm.command("AT+UPSND=0,8")
-        if (response.status == "1") {
-            await gsm.command("AT+UPSDA=0,4")
+        response = await gsm.command("AT+UPSND=0,8")
+        if (response.status == "0") {
+            ractive.set("current_ip", null)
+            await gsm.command("AT+UPSDA=0,2")
         }
-        response = await gsm.command("AT+UPSDA=0,2;+UPSD=0,1;+UPSD=0,7;+UPSDA=0,3;+UPSND=0,0")
-        console.log(response)
+
+        response = await gsm.command("AT+UPSD=0,1;+UPSD=0,7")
         ractive.set("stored_apn", response.apn)
         ractive.set("current_apn", response.apn)
         ractive.set("stored_ip", response.stored_ip)
+
+        response = await gsm.command("AT+UPSND=0,8")
+        if (response.status == "0") {
+            await gsm.command("AT+UPSDA=0,3")
+        }
+
+        response = await gsm.command("AT+UPSND=0,0")
         ractive.set("current_ip", response.ip)
     }
     catch (e) {
