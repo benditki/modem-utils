@@ -8,6 +8,38 @@
     <link rel="stylesheet" href="anim.css">
     </head>
 
+    <script id="file-tpl" type="text/ractive">
+        <input type="file" name="{{name}}_input" hidden on-change="['update_path', name]">
+        <input class="file" name="{{name}}_path" placeholder="Enter file name ..." value="{{value}}" on-change="['change']">
+        <button type="button" class="narrow" onclick="{{name}}_input.click()"><i>&#xe632;</i></button>
+    </script>
+
+    <script id="cert-tpl" type="text/ractive">
+        {{#if label}}
+        <label>{{label}}</label>
+        {{else}}
+        <select value="{{type}}" on-change="['change']">
+            <option value="0">Root CA certificate</option>
+            <option value="1">Client certificate</option>
+            <option value="2">Client private key</option>
+        </select>
+        {{/if}}
+        <file name="{{name}}" value="{{value}}" on-change="['change']"/>
+        {{#if value}}
+        {{#if checked}}
+        <output>
+        {{#if valid}}
+        <i class="good">&#xe66c;</i>{{#if verbose}}<tt>{{md5}}</tt>{{/if}}
+        {{else}}
+        <i class="bad">&#xe681;</i>{{#if verbose}}<span class="bad">Invalid certificate</span>{{/if}}
+        {{/if}}
+        </output>
+        {{elseif manual}}
+        <button type="button" on-click="@this.validate()"><i>&#xe685;</i>Validate</button>
+        {{/if}}
+        {{/if}}
+    </script>
+
     <body>
 
     <div id="container"></div>
@@ -89,6 +121,9 @@
         <section class="{{active_section == 'cloud'? 'active' : ''}}">
             <h1>Cloud connectivity tests</h1>
             <form>
+                <p><cert type="1" label="Client certificate:" name="client_cert" value="{{client_cert}}"/></p>
+                <p><cert type="2" label="Client private key:" name="client_key" value="{{client_key}}"/></p>
+                <p><cert type="0" label="Root CA certificate:" name="ca_cert" value="{{ca_cert}}"/></p>
                 <select value="{{method}}"><option>GET</option></select>
                 <input value="{{url}}">
                 <button type="button" on-click="['http', method, url]">
@@ -104,14 +139,13 @@
             <h1>Certificate tests</h1>
             {{#with cert}}
             <form on-change="@context.set('.checked', false)">
-                <select value="{{type}}">
+                <cert name="test_cert" value="{{.path}}" verbose manual/>
+                <!-- <select value="{{type}}">
                     <option value="0">Root CA certificate</option>
                     <option value="1">Client certificate</option>
                     <option value="2">Client private key</option>
                 </select>
-                <input type="file" name="file" hidden on-change="['update_cert_path']">
-                <input class="file" name="file_path" placeholder="Enter file name" value="{{cert.path}}">
-                <button type="button" class="narrow" onclick="file.click()"><i>&#xe632;</i></button>
+                <file name="cert" value="{{.path}}"/>
                 {{#if path}}
                 {{#if checked}}
                 <output>
@@ -124,7 +158,7 @@
                 {{else}}
                 <button type="button" on-click="['validate_cert']"><i>&#xe685;</i>Validate</button>
                 {{/if}}
-                {{/if}}
+                {{/if}} -->
             </form>
             {{/with}}
         </section>

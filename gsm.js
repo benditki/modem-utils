@@ -229,8 +229,8 @@ class GSM {
 
     AT() { return this.command("AT", { timeout: 200, repeat: 5 }); }
 
-    async loadCert(type, data) {
-        var label = "test";
+    async loadCert(type, data, label) {
+        label = label || "test";
         await this.command(`AT+USECMNG=0,${type},"${label}",${data.length}`, { response_valid: response => response && response.prompt == '>' });
         await this.sendData(data);
         return this.receiveResponse("cert", has('code'), 10000);

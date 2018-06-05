@@ -14,10 +14,63 @@ var sections = [
     { name: 'certificates', icon: '&#xe62e;' }
 ]
 
+var FileElem = Ractive.extend({
+    template: '#file-tpl',
+    on: {
+        update_path(context, name) {
+            if (context.node.files.length) {
+                context.set('value', context.node.files[0].path)
+                var elem = context.node.form[name + "_path"]
+                elem.scrollLeft = elem.scrollWidth
+                this.fire('change')
+                this.fire('select', context, context.get('value'))
+            }
+        }
+    }
+});
+
+var CertElem = Ractive.extend({
+    template: '#cert-tpl',
+    components: {
+        file: FileElem
+    },
+    async validate() {
+        try {
+            var data = fs.readFileSync(this.get('value')).toString('binary')
+            var response = await gsm.loadCert(this.get('type'), data, this.get('name'))
+            this.set("checked", true)
+            console.log(response)
+            if (response.code == "0") {
+                this.set("valid", true)
+                this.set("md5", response.md5)
+            } else {
+                this.set("valid", false)
+            }
+        }
+        catch (e) {
+            log("ERROR: " + e.message)
+        }
+    },
+    on: {
+        "file.select": async function () {
+            if (!this.get('manual')) {
+                this.validate()
+            }
+        },
+        "change": function () {
+            this.set("checked", false)
+        }
+    }
+});
+
 
 var ractive = new Ractive({
     el: 'container',
     template: '#header-tpl',
+    components: {
+        file: FileElem
+        , cert: CertElem
+    },
     data: {
         selected_port: localStorage.selected_port,
         sections,
@@ -167,12 +220,12 @@ async function http(context, method, url) {
 function log(msg) {
     var p = document.createElement("p")
     p.innerText = msg
-    if (msg.startsWith('> ')) {
-        p.classList.add('sent')
+    if (msg.startsWith('ERROR: ') || msg.startsWith('< +CME ERROR:')){
+        p.classList.add('error')
     } else if (msg.startsWith('< ')) {
         p.classList.add('received')
-    } else if (msg.startsWith('ERROR: ')) {
-        p.classList.add('error')
+    } else if (msg.startsWith('> ')) {
+        p.classList.add('sent')
     }
     var elem = $('log')
     elem.appendChild(p)
