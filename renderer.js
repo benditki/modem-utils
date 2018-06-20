@@ -52,7 +52,7 @@ var CertElem = Ractive.extend({
         }
     },
     on: {
-        "file.select": async function () {
+        "file.select": function () {
             if (!this.get('manual')) {
                 this.validate()
             }
@@ -66,18 +66,48 @@ var CertElem = Ractive.extend({
 
 var ractive = new Ractive({
     el: 'container',
-    template: '#header-tpl',
+    template: '#page-tpl',
     components: {
         file: FileElem
         , cert: CertElem
     },
     data: {
-        selected_port: localStorage.selected_port,
         sections,
         active_section: 'modem',
         show_grid: false,
         cert: {},
-        url: "http://34.230.62.7"
+        ready() { 
+            return this.get('hostname') && this.get('path') &&
+                (this.get('method') != 'PUT' || this.get('put_data')) &&
+                (!this.get("use_security") ||
+                this.get("client_cert.checked") && this.get("client_cert.valid") &&
+                this.get("client_key.checked") && this.get("client_key.valid") &&
+                (this.get("server_verif") == 0 ||
+                this.get("ca_cert.checked") && this.get("ca_cert.valid")))
+        }
+    },
+
+    stored: ['selected_port', 'baudrate',
+        'active_section',
+        'use_security',
+        'method', 'hostname', 'port', 'path', 'put_data',
+        'expected_cn', 'server_verif'],
+
+    async oninit() {
+        for (var keypath of this.stored) {
+            try {
+                if (localStorage[keypath]) {
+                    this.set(keypath, JSON.parse(localStorage[keypath]))
+                }
+            } catch (e) {
+                if (e instanceof SyntaxError) {
+                    this.set(keypath, localStorage[keypath])
+                } else {
+                    throw e
+                }
+            }
+        }
+
     },
 
     waiting: (label) => { return `
@@ -85,10 +115,13 @@ var ractive = new Ractive({
         <span class="progress">${label}</span>
         <i class="la-line-scale-pulse-out-rapid la-dark la-sm"><div></div><div></div><div></div><div></div><div></div></i>`
     }
+
 });
 
 window.onbeforeunload = function () {
-    localStorage.selected_port = ractive.get('selected_port')
+    for (keypath of ractive.stored) { 
+        localStorage[keypath] = ractive.get(keypath) || ''
+    }
 }
 window.ractive = ractive
 
@@ -124,7 +157,7 @@ async function disconnect(context) {
 async function connect(context, port_name) {
     try {
         ractive.set('connecting', true)
-        await gsm.connect(port_name, 115200)
+        await gsm.connect(port_name, +ractive.get('baudrate') || 115200)
         ractive.set('connected_port', port_name)
         await gsm.AT()
         await gsm.command("AT+CMEE=2")
@@ -144,8 +177,9 @@ async function get_info(context) {
     try {
         var response;
         ractive.set( { operator: null, network: null, gprs_attached: null } )
-        response = await gsm.command("ATI;+GSN;+CCID")
+        response = await gsm.command("ATI")
         ractive.set("modem.model", response.body)
+        response = await gsm.command("AT+GSN;+CCID")
         ractive.set("modem.sn", response.body)
         ractive.set("sim.id", response.sim_id)
 
@@ -199,12 +233,27 @@ async function validate_cert(context) {
     }
 }
 
-async function http(context, method, url) {
+async function http(context) {
     try {
         context.set('http_error', null)
         context.set('http_response', null)
         context.set('sending', true)
-        var response = await gsm.http(method, url)
+
+        var method = context.get('method')
+        var hostname = context.get('hostname')
+        var port = context.get('port')
+        var path = context.get('path')
+        var data = context.get('put_data')
+        
+        var security = null
+        if (context.get('use_security')) {
+            security = {}
+            security.labels = { ca_cert: 'ca_cert', client_cert: 'client_cert', client_key: 'client_key' }
+            security.level = context.get('server_verif')
+            security.expected_cn = context.get('expected_cn')
+        }
+        
+        var response = await gsm.http(method, hostname, port, path, data, security)
         if (response.http_error) {
             context.set('http_error', response.http_error)
         } else {

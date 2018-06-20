@@ -29,12 +29,12 @@
         {{#if checked}}
         <output>
         {{#if valid}}
-        <i class="good">&#xe66c;</i>{{#if verbose}}<tt>{{md5}}</tt>{{/if}}
+        <i class="good">&#xe66c;</i>{{#if verbose}}<input class="md5" readonly value="{{md5}}">{{/if}}
         {{else}}
         <i class="bad">&#xe681;</i>{{#if verbose}}<span class="bad">Invalid certificate</span>{{/if}}
         {{/if}}
         </output>
-        {{elseif manual}}
+        {{else}}
         <button type="button" on-click="@this.validate()"><i>&#xe685;</i>Validate</button>
         {{/if}}
         {{/if}}
@@ -44,7 +44,7 @@
 
     <div id="container"></div>
  
-    <script id='header-tpl' type='text/ractive'>
+    <script id='page-tpl' type='text/ractive'>
 
     <nav class="back"></nav>
     <nav>
@@ -55,6 +55,7 @@
     </nav>
 
     <header id="header">
+        <p>
         <button on-click=['scan_ports']><i>&#xe6c2;</i>Scan</button>
         
         {{#if ports}}
@@ -65,6 +66,8 @@
         {{/each}}
         </select>
         </div>
+        
+        <input value="{{baudrate}}" placeholder="Enter baud rate..">
         
         {{#if connecting}}
         <button on-click="['abort']"><i>&#xe681;</i>Abort</button>
@@ -80,6 +83,7 @@
         {{/if}}
         
         {{#if scan_error}}{{scan_error.message}}{{/if}}
+        </p>
     </header>
 
     <main>
@@ -121,44 +125,55 @@
         <section class="{{active_section == 'cloud'? 'active' : ''}}">
             <h1>Cloud connectivity tests</h1>
             <form>
-                <p><cert type="1" label="Client certificate:" name="client_cert" value="{{client_cert}}"/></p>
-                <p><cert type="2" label="Client private key:" name="client_key" value="{{client_key}}"/></p>
-                <p><cert type="0" label="Root CA certificate:" name="ca_cert" value="{{ca_cert}}"/></p>
-                <select value="{{method}}"><option>GET</option></select>
-                <input value="{{url}}">
-                <button type="button" on-click="['http', method, url]">
+                <p><label class="checkbox"><input type='checkbox' checked='{{use_security}}'>Use security<i></i></label></p>
+                {{#if use_security}}
+                <p><cert type="1" label="Client certificate:" name="client_cert" value="{{client_cert.path}}" valid="{{client_cert.valid}}" checked="{{client_cert.checked}}" verbose/></p>
+                <p><cert type="2" label="Client private key:" name="client_key" value="{{client_key.path}}" valid="{{client_key.valid}}" checked="{{client_key.checked}}" verbose/></p>
+                <p>Server verification level
+                    <span  id="server-verif-wrap" class="select-wrap">
+                    <select class="server-verif" value="{{server_verif}}">
+                    <option value="0">0: No verification</option>
+                    <option value="1">1: By root CA certificate</option>
+                    <option value="2">2: + Common Name check</option>
+                    <!--<option value="3">3: + Date validity</option>-->
+                    </select>
+                    </span>
+                    {{#if server_verif > 1}}<input class="cert-common-name" value="{{expected_cn}}" placeholder="CN...">{{/if}}
+                </p>
+                {{#if server_verif > 0}}
+                <p><cert type="0" label="Root CA certificate:" name="ca_cert" value="{{ca_cert.path}}" valid="{{ca_cert.valid}}" checked="{{ca_cert.checked}}" verbose/></p>
+                {{/if}}
+                {{/if}}
+                <p>
+                <select value="{{method}}">
+                    <option>GET</option>
+                    <option>PUT</option>
+                </select>
+                <input placeholder="host..." value="{{hostname}}"><input placeholder="path..." class="url-path" value="{{path}}"><input placeholder="port..." class="port" value="{{port}}">
+                {{#if ready()}}
+                <button type="button" on-click="['http']">
                     {{#if sending}}<i class="loader"></i>{{else}}<i>&#xe629;</i>{{/if}}Send
                 </button>
+                {{/if}}
+                </p>
+                {{#if method == "PUT"}}
+                <p><textarea class="put_data" value="{{put_data}}"></textarea>
+                <button type="button"><i>&#xe65c;</i>Import</button>
+                </p>
+                {{/if}}
+                <p>
                 <output>
                     {{#if http_error}}<p class="error"><i class="bad">&#xe681;</i>{{http_error}}</p>{{/if}}
                     {{#if http_response}}<pre>{{http_response}}</pre>{{/if}}
                 </output>
+                </p>
             </form>
         </section>
         <section class="{{active_section == 'certificates'? 'active' : ''}}">
             <h1>Certificate tests</h1>
             {{#with cert}}
             <form on-change="@context.set('.checked', false)">
-                <cert name="test_cert" value="{{.path}}" verbose manual/>
-                <!-- <select value="{{type}}">
-                    <option value="0">Root CA certificate</option>
-                    <option value="1">Client certificate</option>
-                    <option value="2">Client private key</option>
-                </select>
-                <file name="cert" value="{{.path}}"/>
-                {{#if path}}
-                {{#if checked}}
-                <output>
-                {{#if valid}}
-                <i class="good">&#xe66c;</i><tt>{{md5}}</tt>
-                {{else}}
-                <i class="bad">&#xe681;</i><span class="bad">Invalid certificate</span>
-                {{/if}}
-                </output>
-                {{else}}
-                <button type="button" on-click="['validate_cert']"><i>&#xe685;</i>Validate</button>
-                {{/if}}
-                {{/if}} -->
+                <cert name="test_cert" value="{{.path}}" verbose />
             </form>
             {{/with}}
         </section>

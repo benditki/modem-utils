@@ -236,14 +236,18 @@ class GSM {
         return this.receiveResponse("cert", has('code'), 10000);
     }
 
-    async writeFile(filename, data) {
-        await this.command(`AT+UDWNFILE="${filename}",${data.length}`, { response_valid: response => response && response.prompt == '>' });
-        await this.sendData(data);
-        return this.receiveResponse("data", has('code'), 10000);
+    async writeFile(filename, data, append) {
+        if (!append) {
+            await this.command(`AT+UDELFILE="${filename}"`)
+        }
+        if (data) {
+            await this.command(`AT+UDWNFILE="${filename}",${data.length}`, { response_valid: response => response && response.prompt == '>' });
+            await this.sendData(data);
+            return this.receiveResponse("data", has('code'), 10000);
+        }
     }
 
-    async http(method, url_str) {
-        var url = new URL(url_str)
+    async http(method, hostname, port, path, data, security) {
         var response = await this.command("AT+UPSND=0,8")
         if (response.status == "0") {
             await this.command("AT+UPSDA=0,2;+UPSD=0,1;+UPSD=0,7")
@@ -252,13 +256,30 @@ class GSM {
                 throw Error("Can't activate GPRS profile. Possibly no data plan")
             }
         }
-        var action = { GET: 1 }[method]
-        var type = url.hostname.match(/^\d+.\d+.\d+.\d+/)? 0 : 1
-        var path = url.pathname + url.search + url.hash
-        var port = url.port || url.protocol == "https:" ? 443 : 80
+        var action = { GET: 1, PUT: 3 }[method]
+        var type = hostname.match(/^\d+.\d+.\d+.\d+/)? 0 : 1
+        var port = port || (security? 443 : 80)
         var modem_file = "http_res"
-        response = await this.command(`AT+UHTTP=0;+UHTTP=0,${type},"${url.hostname}";+UHTTP=0,5,${port};+UHTTPC=0,${action},"${path}","${modem_file}"`,
-            { timeout: 1 * 60 * 1000, response_valid: and(equal("code", "0"), has("http_result")) })
+        
+        if (method == "PUT") {
+            await this.writeFile("put_data", data);
+        }
+
+        if (security) {
+            await this.command(`AT+USECPRF=0,0,${security.level || 0}`)
+            await this.command(`AT+USECPRF=0,4,"${security.expected_cn || '*'}"`)
+            await this.command(`AT+USECPRF=0,3,"${security.labels.ca_cert}"`)
+            await this.command(`AT+USECPRF=0,5,"${security.labels.client_cert}"`)
+            await this.command(`AT+USECPRF=0,6,"${security.labels.client_key}"`)
+        }
+        
+        var command = `AT` +
+            //`+CCLK="${date};"` +
+            `+UHTTP=0;${security?'+UHTTP=0,6,1,0;':''}` +
+            `+UHTTP=0,${type},"${hostname}";+UHTTP=0,5,${port};`+
+            `+UHTTPC=0,${action},"${path}","${modem_file}"${method=='PUT' ? ',"put_data",0' : ''}`
+
+        response = await this.command(command, { timeout: 1 * 60 * 1000, response_valid: and(equal("code", "0"), has("http_result")) })
 
         if (response.http_result == "1") {
             return this.command(`AT+URDFILE="${modem_file}"`)

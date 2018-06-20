@@ -64,13 +64,16 @@ i.loader {
   100% { transform: rotate(360deg); }
 }
 
+p {
+  padding: 8px 16px;
+}
 
 button {
     border-radius: 4px;
     border: 1px solid #bbb;
     background: none;
     padding: 0px 8px;
-    margin: 8px;
+    margin-right: 8px;
     height: 32px;
     text-align: left;
     text-transform: uppercase;
@@ -107,11 +110,11 @@ td button {
     vertical-align: middle
 }
 
-form input, form select {
+input, form input, form select {
     font-family: 'Roboto-regular';
     font-size: 16px;
     height: 32px;
-    margin: 8px;
+    margin-right: 8px;
     border-radius: 4px;
     border: 1px solid #ddd;
     padding: 0px 8px;
@@ -123,14 +126,13 @@ form input.file {
 }
 
 output i {
-    font-size: 40px;
+    font-size: 32px;
     vertical-align: middle;
     margin-right: 8px;
 }
 
-output pre, output p {
+output pre {
     padding: 8px;
-    margin: 8px;
     border: 1px solid #444;
     border-radius: 4px;
 }
@@ -251,6 +253,8 @@ header {
     border-radius: 4px;
     overflow: hidden;
     position: relative;
+    margin-right: 8px;
+    height: 32px;
 }
 
 .select-wrap:after {
@@ -273,11 +277,52 @@ header {
     -webkit-appearance: none;
 }
 
+.checkbox input {
+  position: absolute;
+  opacity: 0;
+}
+
+.checkbox {
+  cursor: pointer;
+  position: relative;
+  top: 0;
+  left: 0;
+  padding-left: 30px;
+  padding-top: 0;
+}
+
+.checkbox i {
+  position: absolute;
+  content: '';
+  display: inline-block;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #0080d3;
+  border-radius: 4px;
+}
+
+.checkbox i:after {
+  content: '';
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 0px;
+  width: 6px;
+  height: 14px;
+  border: solid #5af;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox input:checked ~ i:after {
+  display: block;
+}
+
 #ports-wrap {
     width: 320px;
-    height: 32px;
-    padding-top: 6px;
-    margin: 8px 0px;
+    padding-top: 4px;
 }
 
 #ports {
@@ -286,6 +331,12 @@ header {
     width: 360px;
     margin-top: -2px;
     padding-left: 8px;
+}
+
+#server-verif-wrap {
+    width: 240px;
+    vertical-align: -40%;
+    margin-left: 8px;
 }
 
 footer {
@@ -301,6 +352,29 @@ footer {
     margin: 0px 16px;
 }
 
+.put_data {
+    height: 150px;
+    width: 400px;
+    vertical-align: bottom;
+}
+
+.port {
+    width: 80px;
+}
+
+.url-path {
+    width: 320px;
+}
+
+.md5 {
+    width: 280px;
+    font-mafimily: consolas
+}
+
+.common-name {
+    width: 160px;
+}
+
 #log {
     background: #333;
     height: 100%;
@@ -308,6 +382,7 @@ footer {
 }
 
 #log p {
+    padding: 0;
     padding-left: 55px;
     text-indent: -50px;
     color: #ccc;
