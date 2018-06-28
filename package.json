@@ -1,11 +1,14 @@
 {
   "name": "modem-utils",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "install": "electron-rebuild",
+    "pack": "electron-packager . --out=builds/v%npm_package_version% --electron-version=2.0.1 --overwrite",
+    "deploy": "ncp builds/v%npm_package_version%/modem-utils-win32-x64 //dfs/mobileye/Docs/iliab/model-utils/model-utils-%npm_package_version%",
+    "release": "npm version minor && npm run pack && npm run deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": "./index.js",
