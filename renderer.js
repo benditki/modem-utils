@@ -155,13 +155,17 @@ async function disconnect(context) {
 }
 
 async function connect(context, port_name) {
+    var baudrates = [115200, 921600, 9600]
+    var baudrate = Number.parseInt(ractive.get('baudrate'))
+    if (!Number.isNaN(baudrate)) {
+        baudrates = [baudrate].concat(baudrates.filter(b => b != baudrate))
+    }
     try {
         ractive.set('connecting', true)
-        await gsm.connect(port_name, +ractive.get('baudrate') || 115200)
+        var baudrate = await gsm.connect(port_name, baudrates)
         ractive.set('connected_port', port_name)
-        await gsm.AT()
-        await gsm.command("AT+CMEE=2")
         ractive.set('connecting', false)
+        ractive.set('baudrate', baudrate)
 
         return get_info(context)
     }

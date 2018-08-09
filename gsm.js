@@ -153,16 +153,32 @@ class GSM {
         }
     }
 
-    async connect(path, baudrate) {
-        await this.disconnect();
-        debug("connecting to %s, baudrate=%d", path, baudrate);
-        var port = new SerialPort(path, { baudRate: baudrate, autoOpen: false });
-        this.port = port;
+    async connect(path, baudrates) {
+        for (var baudrate of baudrates) {
+            try {
+                await this.disconnect()
+                debug("connecting to %s, baudrate=%d", path, baudrate)
+                var port = new SerialPort(path, { baudRate: baudrate, autoOpen: false })
+                this.port = port
 
-        return new Promise((resolve, reject) => {
-            port.open(reject);
-            port.on('open', resolve);
-        }).then(() => { this.log(`Connected to ${path}, baudrate=${baudrate}`) } );
+                await new Promise((resolve, reject) => {
+                    port.open(reject);
+                    port.on('open', resolve);
+                }).then(() => { this.log(`Connected to ${path}, baudrate=${baudrate}`) } );
+                
+                await this.AT()
+                await this.command("AT+CMEE=2")
+                return baudrate
+                
+            }
+            catch (e) {
+                if (e instanceof NoResponseError) {
+                    this.log("no response")
+                } else {
+                    throw e
+                }
+            }
+        }
     }
 
     async command(cmd, opts) {
