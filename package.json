@@ -6,8 +6,8 @@
   "scripts": {
     "start": "electron .",
     "install": "electron-rebuild",
-    "pack": "electron-packager . --out=builds/v%npm_package_version% --electron-version=2.0.1 --overwrite",
-    "deploy": "ncp builds/v%npm_package_version%/modem-utils-win32-x64 //dfs/mobileye/Docs/iliab/model-utils/model-utils-%npm_package_version%",
+    "pack": "electron-builder --win portable",
+    "deploy": "ncp \"dist/modem-utils %npm_package_version%.exe\" //dfs/mobileye/AMS_Releases/Utils/ModemUtils/modem-utils-%npm_package_version%.exe",
     "release": "npm version minor && npm run pack && npm run deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
