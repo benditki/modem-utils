@@ -154,7 +154,8 @@ class GSM {
     }
 
     async connect(path, baudrates) {
-        for (var baudrate of baudrates) {
+        for (var i = 0; i < baudrates.length; i++) {
+            var baudrate = baudrates[i]
             try {
                 await this.disconnect()
                 debug("connecting to %s, baudrate=%d", path, baudrate)
@@ -172,7 +173,7 @@ class GSM {
                 
             }
             catch (e) {
-                if (e instanceof NoResponseError) {
+                if (i + 1 < baudrates.length && e instanceof NoResponseError) {
                     this.log("no response")
                 } else {
                     throw e

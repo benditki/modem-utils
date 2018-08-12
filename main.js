@@ -7,7 +7,7 @@ let mainWindow
 function createWindow () {
   mainWindow = new BrowserWindow({width: 1600, height: 1000, title: `Modem Utils v${require('./package.json').version}`})
   mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
+    pathname: path.join(__dirname, 'batch.html'),
     protocol: 'file:',
     slashes: true
   }))

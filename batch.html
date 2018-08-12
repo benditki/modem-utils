@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="anim.css">
+    </head>
+
+    <body>
+    </body>
+
+    <script id='page-tpl' type='text/ractive'>
+    <header>
+        <h1><span class="A">.</span><span class="B">M</span><span class="C">U</span><span class="D">.</span><span class="E">BATCH</span></h1>
+    </header>
+    
+    <main>
+    <table>
+    <tr>{{#each gsm: port_name}}<td>Port</td><th>{{port_name}}</th>{{/each}}</tr>
+    <tr>{{#each gsm: port_name}}<td>Baudrate</td><td>{{#if state==0}} ... {{elseif state>0}} {{active_baudrate}} {{/if}}</td>{{/each}}</tr>
+    <tr>{{#each gsm: port_name}}<td>Model</td>   <td>{{#if state==1}} ... {{elseif state>1}} {{model}}           {{/if}}</td>{{/each}}</tr>
+    <tr>{{#each gsm: port_name}}<td>SN</td>      <td>{{#if state==1}}     {{elseif state>1}} {{sn}}              {{/if}}</td>{{/each}}</tr>
+    <tr>{{#each gsm: port_name}}<td>Sim</td>     <td>{{#if state==1}}     {{elseif state>1}} {{sim_id}}          {{/if}}</td>{{/each}}</tr>
+    <tr>{{#each gsm: port_name}}<td>Operator</td><td>{{#if state==2}} ... {{elseif state>2}} {{operator}}        {{/if}}</td>{{/each}}</tr>
+    <tr>{{#each gsm: port_name}}<td>Network</td> <td>{{#if state==2}}     {{elseif state>2}} {{network}}         {{/if}}</td>{{/each}}</tr>
+    <tr>{{#each gsm: port_name}}<td>APN</td>     <td>{{#if state==3}} ... {{elseif state>3}} {{stored_apn}}      {{/if}}</td>{{/each}}</tr>
+    <tr>{{#each gsm: port_name}}<td>IP</td>      <td>{{#if state==4}} ... {{elseif state>4}} {{current_ip}}      {{/if}}</td>{{/each}}</tr>
+    </table>
+    </main>
+    
+    <footer>
+        <div id="log"></div>
+    </footer>
+
+    
+    <div id="grid" class="{{grid_visible? 'shown' : ''}}"></div>
+    <button id="grid-toggle" on-click="@.toggle('grid_visible')" class="{{grid_visible? 'off' : ''}}">##</button>
+
+    </script>
+
+    <script>
+    require('./batch.js')
+    </script>
+</html>

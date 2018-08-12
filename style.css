@@ -201,21 +201,22 @@ nav i {
     margin: 0px 10px;
 }
 
-nav h1 {
+nav h1, header h1 {
     font-family: Bungee-Regular;
     font-size: 42px;
     line-height: 48px;
 }
 
-nav h1 .A {  color: red; }
-nav h1 .B {  color: green; }
-nav h1 .C {  color: yellow; }
-nav h1 .D {  color: orange; }
+nav h1 .A, header h1 .A {  color: red; }
+nav h1 .B, header h1 .B {  color: green; }
+nav h1 .C, header h1 .C {  color: yellow; }
+nav h1 .D, header h1 .D {  color: orange; }
+nav h1 .E, header h1 .E {  color: blue; }
 
 
 main {
     position: fixed;
-    left: 240px;
+    left: 0px;
     right: 0;
     top: 48px;
     bottom: 400px;
@@ -240,9 +241,10 @@ section h1 {
 header {
     position: fixed;
     top: 0;
-    left: 240px;
+    left: 0px;
     right: 0;
     height: 48px;
+    background-color: #abc;
 }
 
 .select-wrap {
@@ -342,7 +344,7 @@ header {
 footer {
     position: fixed;
     bottom: 0;
-    left: 240px;
+    left: 0px;
     right: 0;
     height: 400px;
 }
