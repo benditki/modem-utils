@@ -146,6 +146,11 @@ output .bad {
     color: red
 }
 
+output .warn {
+    color: orange
+}
+
+
 output p.error {
     border-color: red;
     background-color: #fee;
@@ -437,3 +442,19 @@ footer {
     color: red;
 }
 
+#batch-table {
+    margin-top: 24px;
+    margin-left: 48px;
+}
+
+#batch-table tr {
+    height: 32px;
+}
+
+#batch-table td {
+    min-width: 240px;
+}
+
+#batch-table th {
+    min-width: 120px;
+}
