@@ -16,17 +16,22 @@
     
     <main>
     <table id="batch-table">
-    <tr><th>Port</th>     {{#each gsm: port_name}}<th>{{port_name}}</th>{{/each}}</tr>
-    <tr><th>Baudrate</th> {{#each gsm: port_name}}<td>{{#if state==0}} ... {{elseif state>0}} {{active_baudrate}} {{/if}}</td>{{/each}}</tr>
-    <tr><th>Model</th>    {{#each gsm: port_name}}<td>{{#if state==2}} ... {{elseif state>2}} {{model}}           {{/if}}</td>{{/each}}</tr>
-    <tr><th>SN</th>       {{#each gsm: port_name}}<td>{{#if state==2}}     {{elseif state>2}} {{sn}}              {{/if}}</td>{{/each}}</tr>
-    <tr><th>APN</th>      {{#each gsm: port_name}}<td>{{#if state==3}} ... {{elseif state>3}} {{apn}}             {{/if}}</td>{{/each}}</tr>
-    <tr><th>Static IP</th>{{#each gsm: port_name}}<td>{{#if state==3}}     {{elseif state>3}} {{static_ip}}       {{/if}}</td>{{/each}}</tr>
-    <tr><th>Sim</th>      {{#each gsm: port_name}}<td>{{#if state==3}}     {{elseif state>3}} {{#if sim_id}} {{sim_id}} {{else}} <output> <i class="warn">&#xe67b;</i> NO SIM</output> {{/if}} {{/if}}</td>{{/each}}</tr>
-    <tr><th>Operator</th> {{#each gsm: port_name}}<td>{{#if state==5}} ... {{elseif state>5}} {{operator}}        {{/if}}</td>{{/each}}</tr>
-    <tr><th>Network</th>  {{#each gsm: port_name}}<td>{{#if state==5}}     {{elseif state>5}} {{network}}         {{/if}}</td>{{/each}}</tr>
-    <tr><th>IP</th>       {{#each gsm: port_name}}<td>{{#if state==6}} ... {{elseif state>6}} {{current_ip}}      {{/if}}</td>{{/each}}</tr>
-    <tr><th>Test</th>   {{#each gsm: port_name}}<td>{{#if state==7}} <output> <i class="good">&#xe66c;</i> Done</output> {{/if}}</td>{{/each}}</tr>
+    <tr><th></th>     {{#each gsm: port_name}}<td class="space"></td><th class="port-name inner"  class="{{state_class(this)}}">{{port_name}}</th>{{/each}}</tr>
+    <tr><th>Baudrate</th> {{#each gsm: port_name}}<td class="space"></td><td class="inner baudrate" class="{{state_class(this)}}">{{#if state==0}} {{{@.carousel()}}} {{elseif state>0}} {{active_baudrate}} {{/if}}</td>{{/each}}</tr>
+    <tr><th>Model</th>    {{#each gsm: port_name}}<td class="space"></td><td class="inner" class="{{state_class(this)}}">{{#if state==2}}                                   {{elseif state>2}} {{model}}           {{/if}}</td>{{/each}}</tr>
+    <tr><th>SN</th>       {{#each gsm: port_name}}<td class="space"></td><td class="inner" class="{{state_class(this)}}">{{#if state==2}}                                   {{elseif state>2}} {{sn}}              {{/if}}</td>{{/each}}</tr>
+    <tr><th>APN</th>      {{#each gsm: port_name}}<td class="space"></td><td class="inner" class="{{state_class(this)}}">{{#if state==3}} {{{@.waiting("Configuring")}}}    {{elseif state>3}} {{apn}}             {{/if}}</td>{{/each}}</tr>
+    <tr><th>Static IP</th>{{#each gsm: port_name}}<td class="space"></td><td class="inner" class="{{state_class(this)}}">{{#if state==3}}                                   {{elseif state>3}} {{static_ip}}       {{/if}}</td>{{/each}}</tr>
+    <tr><th>Sim</th>      {{#each gsm: port_name}}<td class="space"></td><td class="inner" class="{{state_class(this)}}">{{#if state==3}}                                   {{elseif state>3}} {{#if sim_id}} {{sim_id}} {{/if}} {{/if}}</td>{{/each}}</tr>
+    <tr><th>Operator</th> {{#each gsm: port_name}}<td class="space"></td><td class="inner" class="{{state_class(this)}}">{{#if state==5}} {{{@.waiting("Registering")}}}    {{elseif state>5}} {{operator}}        {{/if}}</td>{{/each}}</tr>
+    <tr><th>Network</th>  {{#each gsm: port_name}}<td class="space"></td><td class="inner" class="{{state_class(this)}}">{{#if state==5}}     {{elseif state>5}} {{network}}         {{/if}}</td>{{/each}}</tr>
+    <tr><th>IP</th>       {{#each gsm: port_name}}<td class="space"></td><td class="inner" class="{{state_class(this)}}">{{#if state==6}} {{{@.waiting("Acivating Data")}}} {{elseif state>6}} {{current_ip}}      {{/if}}</td>{{/each}}</tr>
+    <tr><th></th>         {{#each gsm: port_name}}<td class="space"></td><td class="result inner" class="{{state_class(this)}}">
+        {{#if done}}
+        {{#if state==7}}   <output> <i class="good">&#xe66c;</i> Done</output>
+        {{elseif !sim_id}} <output> <i class="warn">&#xe67b;</i> No sim</output> {{/if}}
+        {{/if}}
+    </td>{{/each}}</tr>
     </table>
     </main>
     

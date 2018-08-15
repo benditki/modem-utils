@@ -18,6 +18,18 @@
     src: url('fonts/Bungee-Regular.ttf');
 }
 
+@font-face {
+    font-family: 'KellySlab-Regular';
+    src: url('fonts/KellySlab-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Share-Regular';
+    src: url('fonts/Share-Regular.ttf');
+}
+
+
+
 * {
     box-sizing: border-box;
     padding: 0;
@@ -226,6 +238,7 @@ main {
     top: 48px;
     bottom: 400px;
     overflow: auto;
+    background-color: #f3f5ff
 }
 
 section {
@@ -445,16 +458,129 @@ footer {
 #batch-table {
     margin-top: 24px;
     margin-left: 48px;
+    border-collapse: collapse;
+}
+
+#batch-table td, #batch-table th {
+    border-top: 1px solid #ddd;
+}
+
+#batch-table tr:first-child th,
+#batch-table tr:first-child td,
+#batch-table tr:nth-child(2) th,
+#batch-table tr:nth-child(2) td {
+    border-top: 0;
 }
 
 #batch-table tr {
     height: 32px;
 }
 
+#batch-table tr:first-child {
+    height: 64px;
+}
+
 #batch-table td {
     min-width: 240px;
 }
 
+#batch-table td.space {
+    min-width: 48px;
+}
+
 #batch-table th {
     min-width: 120px;
+    font-weight: normal;
 }
+
+
+#batch-table td.inner,
+#batch-table th.inner {
+    font-family: Share-Regular;
+    font-size: 18px;
+    background-color: #eee;
+}
+
+
+#batch-table th.port-name {
+    font-family: KellySlab-Regular;
+    font-size: 36px;
+    font-weight: bold;
+    text-align: center;
+    color: #164217;
+}
+
+
+#batch-table td.baudrate {
+    text-align: center;
+    height: 64px;
+}
+
+#batch-table td.result {
+    text-align: center;
+    text-transform: uppercase;
+    height: 64px;
+}
+
+#batch-table th.port-name {
+    background-color: #ccc;
+}
+
+#batch-table td.inner,
+#batch-table th.inner {
+    border-left: 4px solid #999;
+    border-right: 4px solid #999;
+}
+
+#batch-table tr:first-child th.inner,
+#batch-table tr:first-child td.inner {
+    border-top: 4px solid #999;
+}
+
+#batch-table tr:last-child th.inner,
+#batch-table tr:last-child td.inner {
+    border-bottom: 4px solid #999;
+}
+
+
+#batch-table th.port-name.done {
+    background-color: #cc4;
+}
+
+#batch-table td.inner.done,
+#batch-table th.inner.done {
+    border-left: 4px solid #992;
+    border-right: 4px solid #992;
+}
+
+#batch-table tr:first-child th.inner.done,
+#batch-table tr:first-child td.inner.done {
+    border-top: 4px solid #992;
+}
+
+#batch-table tr:last-child th.inner.done,
+#batch-table tr:last-child td.inner.done {
+    border-bottom: 4px solid #992;
+}
+
+
+#batch-table th.port-name.wip {
+    background-color: #cdf;
+}
+
+#batch-table td.inner.wip,
+#batch-table th.inner.wip {
+    border-left: 4px solid #9ad;
+    border-right: 4px solid #9ad;
+}
+
+#batch-table tr:first-child th.inner.wip,
+#batch-table tr:first-child td.inner.wip {
+    border-top: 4px solid #9ad;
+}
+
+#batch-table tr:last-child th.inner.wip,
+#batch-table tr:last-child td.inner.wip {
+    border-bottom: 4px solid #9ad;
+}
+

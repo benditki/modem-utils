@@ -174,3 +174,35 @@ vertical-align: -2px;
                 transform: scaley(1);
     }
 }
+
+/**
+ * ==============================================
+ * Dot Carousel. Source: https://github.com/nzbin/three-dots
+ * ==============================================
+ */
+.dot-carousel {
+  position: relative;
+  left: calc(50% - 9999px);
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: #444;
+  color: #444;
+  box-shadow: 9984px 0 0 0 #444, 9999px 0 0 0 #444, 10014px 0 0 0 #444;
+  animation: dotCarousel 1.5s infinite linear;
+}
+
+
+@keyframes dotCarousel {
+    0% {
+        box-shadow: 9984px 0 0 -1px #292, 9999px 0 0 1px #292, 10014px 0 0 -1px #292;
+    }
+
+    50% {
+        box-shadow: 10014px 0 0 -1px #444, 9984px 0 0 -1px #444, 9999px 0 0 1px #444;
+    }
+    100% {
+        box-shadow: 9999px 0 0 1px #444, 10014px 0 0 -1px #444, 9984px 0 0 -1px #444;
+    }
+}
+

@@ -17,6 +17,18 @@ var ractive = new Ractive({
     template: '#page-tpl',
     data: {
         show_grid: false,
+        state_class(gsm) {
+            if (gsm.done) {
+                return 'done'
+            }
+            if (gsm.state >= 1) return 'wip'
+        }
+    },
+    carousel() { return `<div class="dot-carousel"></div>` },
+    waiting: (label) => { return `
+        <i class="la-line-scale-pulse-out-rapid la-dark la-sm"><div></div><div></div><div></div><div></div><div></div></i>
+        <span class="progress">${label}</span>
+        <i class="la-line-scale-pulse-out-rapid la-dark la-sm"><div></div><div></div><div></div><div></div><div></div></i>`
     }
 });
 
@@ -78,6 +90,7 @@ async function connect(port_name) {
     var key = "gsm." + port_name + "."
     var gsm = gsms[port_name]
     try {
+        await ractive.set(key + "done", false)
         await ractive.set(key + "state", 0)
         baudrate = await gsm.connect(port_name, baudrates)
         
@@ -144,6 +157,8 @@ async function connect(port_name) {
             await ractive.set("current_ip", response.ip)
             await ractive.set(key + "state", 7)
         }
+        
+        await ractive.set(key + "done", true)
             
         setTimeout(check, 200, port_name)
     }
@@ -155,16 +170,17 @@ async function connect(port_name) {
 
 async function disconnect(port_name) {
     await gsms[port_name].disconnect()
-    gsms[port_name] = null
+    delete gsms[port_name]
 }
 
 async function check(port_name) {
+    if (!gsms[port_name]) return;
     try {
         await gsms[port_name].AT()
         setTimeout(check, 200, port_name)
     } catch (e) {
         log("ERROR: " + e.message)
-        disconnect(port_name)
+        await disconnect(port_name)
     }
 }
 
@@ -180,12 +196,24 @@ async function refresh_ports() {
         serial_seen[port.serialNumber] = true
         port_names.push(port.comName)
     }
-    
+
+    console.log(port_names)    
+    console.log(gsms)
     for (var port_name of port_names) {
         if (!gsms[port_name]) {
             var gsm = new GSM(log)
             gsms[port_name] = gsm
             connect(port_name)
+        }
+    }
+    
+    for (var port_name in gsms) {
+        if (gsms[port_name]) {
+            if (!port_names.includes(port_name)) {
+                await disconnect(port_name)
+                delete ractive.get('gsm')[port_name]
+                await ractive.update('gsm.' + port_name)
+            }
         }
     }
     
