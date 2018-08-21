@@ -13,6 +13,7 @@ class NoResponseError extends Error {
     }
 }
 
+
 function parse_network(num) {
     switch (num) {
         case "0": return { network: "GSM" }
@@ -53,6 +54,36 @@ function parse_file_read(data) {
     }
 }
 
+function parse_profile(data) {
+    var re_start = /^ACTIVE PROFILE/
+    var re = /^ACTIVE PROFILE: \r\n[^]*?&K(\d+),[^]*? E(\d+),[^]*? V(\d+),[^]*?STORED PROFILE 0:.\r\n[^]*?STORED PROFILE 1:.\r\n[^]*?.+CSNS:\d+\r\n/
+    debug("parsing", jsesc(data), "with", re);
+    var res = data.match(re_start)
+    
+    if (res) {
+        res = data.match(re)
+        if (!res) {
+            return { partial: true }
+        }
+        
+        return res
+    }
+}
+
+
+function parse_result(word) {
+    const results = {
+        "OK": 0,
+        "ERROR": 1
+    }
+    
+    if (word in results) {
+        return { code: results[word] }
+    }
+    
+    throw RangeError(`No such result word '${word}'`)
+}
+
 
 class ModemParser extends Transform {
     constructor (opts) {
@@ -79,41 +110,52 @@ class ModemParser extends Transform {
             [/^\+UPSD: 0,7,"(.*)"\r\n/, "stored_ip"],
             [/^\+UPSND: 0,0,"(.*)"\r\n/, "ip"],
             [/^\+CGATT: (\d+)\r\n/, "gprs_attached"],
+            [parse_profile, "flow_control", "echo", "verbose"],
             [/^([0-9])\r/, "code"],
+            [/^(OK|ERROR)\r\n/, parse_result],
+            [/^[\r\n]+/],
             [/^(.+?)[\r\n]+/, "body"]
         ];
-        var parsing = true;
+        
+        var parsing = true
         while (this.data.length && parsing) {
-            parsing = false;
+            parsing = false
             for (var test of tests) {
                 var res;
                 if (typeof test[0] == 'function') {
                     res = test[0](this.data)
                 } else {
-                    debug("parsing", jsesc(this.data), "with", test[0]);
-                    res = this.data.match(test[0]);
+                    debug("parsing", jsesc(this.data), "with", test[0])
+                    res = this.data.match(test[0])
                 }
                 if (res) {
+                    if (res.partial) {
+                        debug("partial", jsesc(this.data))
+                        setImmediate(cb)
+                        return
+                    }
+                    
                     parsing = true;
-                    this.log("< " + jsesc(res[0]));
+                    this.log("< " + jsesc(res[0]))
                     var response = {}
                     for (var i = 1; i < test.length; i++) {
                         debug("typeof test[i] ==", typeof test[i])
                         if (typeof test[i] == "function") {
                             Object.assign(response, test[i](res[i]))
                         } else {
-                            response[test[i]] = res[i];
+                            response[test[i]] = res[i]
                         }
                     }
                     if (typeof response.error !== 'undefined') {
-                        response.code = 4;
+                        response.code = 4
                     }
-                    this.push(response);
-                    this.data = this.data.slice(res[0].length);
+                    this.push(response)
+                    this.data = this.data.slice(res[0].length)
+                    break
                 }
             }
         }
-        setImmediate(cb);
+        setImmediate(cb)
     }
 
     _flush(cb) {
@@ -134,6 +176,11 @@ function equal (key, value) {
 
 function and (...funcs) {
     return obj => funcs.reduce((a, b) => a && b(obj), true)
+}
+
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 
@@ -212,6 +259,13 @@ class GSM {
         }
         return response;
     }
+    
+    async restart() {
+        await this.command("AT+CFUN=15")
+        await sleep(4000)
+        await this.command("AT", { timeout: 200, repeat: 20 });
+        await this.command("AT+CMEE=2")
+    }
 
     receiveResponse(cmd, response_valid, timeout) {
         var silence_timeout = this.silense_timeout;
@@ -244,7 +298,14 @@ class GSM {
         return this.port.drain();
     }
 
-    AT() { return this.command("AT", { timeout: 200, repeat: 5 }); }
+    AT() { return this.command("AT", { timeout: 200, repeat: 5 } ) }
+    async CCID() {
+        for (var i = 0; i < 5; i++) {
+            var response = await this.command("AT+CCID")
+            if (response.sim_id) return response
+        }
+        return {}
+    }
 
     async loadCert(type, data, label) {
         label = label || "test";

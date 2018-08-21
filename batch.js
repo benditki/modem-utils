@@ -66,10 +66,6 @@ function log(msg) {
     elem.scrollTop = elem.scrollHeight
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 var desired_baudrate = 921600
 
 function make_first(first, list) {
@@ -100,9 +96,8 @@ async function connect(port_name) {
         if (baudrate != desired_baudrate) {
             await gsm.command(`AT+IPR=${desired_baudrate}`)
             baudrate = await gsm.connect(port_name, make_first(desired_baudrate, baudrates))
-            await gsm.command("AT&W;+CFUN=15")
-            await sleep(4000)
-            await gsm.command("AT", { timeout: 200, repeat: 20 });
+            await gsm.command("AT&W")
+            await gsm.restart()
         }
         
         baudrate_map[port_name] = baudrate
@@ -118,15 +113,20 @@ async function connect(port_name) {
         await ractive.set(key + "state", 3)
         
         response = await gsm.command("AT+UPSND=0,8")
-        if (response.status == "0") {
+        var gprs_activated = response.status == "1"
+        if (!gprs_activated) {
             await gsm.command("AT+UPSDA=0,2")
         }
 
-        response = await gsm.command("AT+UPSD=0,1;+UPSD=0,7")
-        if (response.apn != "mobileye8") {
-            response = await gsm.command("ATE0;V0;&K0;&W;+UPSD=0,1,\"mobileye8\";+UPSD=0,7,\"0.0.0.0\";+UPSDA=0,1;+CFUN=15")
-            await sleep(4000)
-            await gsm.command("AT", { timeout: 200, repeat: 20 });
+        response = await gsm.command("AT+UPSD=0,1;+UPSD=0,7;&V")
+        console.log(response)
+        if (response.apn != "mobileye8" || response.stored_ip != "0.0.0.0" ||
+                response.flow_control != "0" || response.echo != "0" || response.verbose != "0") {
+            if (gprs_activated) {
+                await gsm.command("AT+UPSDA=0,4")
+            }
+            await gsm.command("ATE0;V0;&K0;&W;+UPSD=0,1,\"mobileye8\";+UPSD=0,7,\"0.0.0.0\";+UPSDA=0,1")
+            await gsm.restart()
             await gsm.command("AT+UPSDA=0,2")
             response = await gsm.command("AT+UPSD=0,1;+UPSD=0,7")
         }
@@ -134,7 +134,7 @@ async function connect(port_name) {
         await ractive.set(key + "apn", response.apn)
         await ractive.set(key + "static_ip", response.stored_ip)
 
-        response = await gsm.command("AT+CCID")
+        response = await gsm.CCID()
         await ractive.set(key + "sim_id", response.sim_id)
         await ractive.set(key + "state", 4)
         if (response.sim_id) {
@@ -176,8 +176,8 @@ async function disconnect(port_name) {
 async function check(port_name) {
     if (!gsms[port_name]) return;
     try {
-        await gsms[port_name].AT()
-        setTimeout(check, 200, port_name)
+        await gsms[port_name].command("AT", {timeout: 200, repeat: 1})
+        setTimeout(check, 400, port_name)
     } catch (e) {
         log("ERROR: " + e.message)
         await disconnect(port_name)
@@ -187,7 +187,12 @@ async function check(port_name) {
 async function refresh_ports() {
     var exclude_ports = ["COM1"]
     var ports = await scan_ports()
-    //console.log(ports)
+    ports.sort((a,b) => {
+        a = a.pnpId
+        b = b.pnpId
+        return a === b ? 0 : a < b ? -1 : 1
+    })
+
     var serial_seen = {}
     var port_names = [];
     for (port of ports) {
@@ -197,8 +202,6 @@ async function refresh_ports() {
         port_names.push(port.comName)
     }
 
-    console.log(port_names)    
-    console.log(gsms)
     for (var port_name of port_names) {
         if (!gsms[port_name]) {
             var gsm = new GSM(log)
@@ -216,8 +219,6 @@ async function refresh_ports() {
             }
         }
     }
-    
-    setTimeout(refresh_ports, 200)
 }
 
-setImmediate(refresh_ports)
+setInterval(refresh_ports, 200)

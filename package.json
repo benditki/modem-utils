@@ -8,7 +8,7 @@
     "install": "electron-rebuild",
     "pack": "electron-builder --win portable",
     "deploy": "ncp \"dist/modem-utils %npm_package_version%.exe\" //dfs/mobileye/AMS_Releases/Utils/ModemUtils/modem-utils-%npm_package_version%.exe",
-    "release": "npm version minor && npm run pack && npm run deploy",
+    "release": "npm version patch && npm run pack && npm run deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": "./index.js",
