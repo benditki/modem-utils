@@ -187,18 +187,10 @@ async function check(port_name) {
 async function refresh_ports() {
     var exclude_ports = ["COM1"]
     var ports = await scan_ports()
-    ports.sort((a,b) => {
-        a = a.pnpId
-        b = b.pnpId
-        return a === b ? 0 : a < b ? -1 : 1
-    })
 
-    var serial_seen = {}
     var port_names = [];
     for (port of ports) {
         if (exclude_ports.includes(port.comName)) continue;
-        if (serial_seen[port.serialNumber]) continue;
-        serial_seen[port.serialNumber] = true
         port_names.push(port.comName)
     }
 
