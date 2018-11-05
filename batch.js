@@ -52,6 +52,7 @@ window.ractive = ractive
 
 
 function log(msg) {
+    /*
     var p = document.createElement("p")
     p.innerText = msg
     if (msg.startsWith('ERROR: ') || msg.startsWith('< +CME ERROR:')){
@@ -64,6 +65,7 @@ function log(msg) {
     var elem = $('log')
     elem.appendChild(p)
     elem.scrollTop = elem.scrollHeight
+    */
 }
 
 var desired_baudrate = 921600

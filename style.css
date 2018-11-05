@@ -236,7 +236,7 @@ main {
     left: 0px;
     right: 0;
     top: 48px;
-    bottom: 400px;
+    bottom: 0;
     overflow: auto;
     background-color: #f3f5ff
 }
