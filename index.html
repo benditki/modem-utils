@@ -145,6 +145,7 @@
                 <p>
                 <select value="{{method}}">
                     <option>GET</option>
+                    <option>POST</option>
                     <option>PUT</option>
                 </select>
                 <input placeholder="host..." value="{{hostname}}"><input placeholder="path..." class="url-path" value="{{path}}"><input placeholder="port..." class="port" value="{{port}}">
@@ -154,7 +155,7 @@
                 </button>
                 {{/if}}
                 </p>
-                {{#if method == "PUT"}}
+                {{#if method == "PUT" || method == "POST" }}
                 <p><textarea class="put_data" value="{{put_data}}"></textarea>
                 <button type="button"><i>&#xe65c;</i>Import</button>
                 </p>

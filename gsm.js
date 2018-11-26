@@ -49,7 +49,7 @@ function parse_file_read(data) {
         res[3][0] == '"' && res[3][(+res[2])+1] == '"') {
 
         var res_length = res[1].length + res[2].length + (+res[2]) + 4
-        return [data.slice(0, res_length), res[3].slice(1, +res[2])]
+        return [data.slice(0, res_length), res[3].slice(1, +res[2] + 1)]
     }
 }
 
@@ -272,12 +272,12 @@ class GSM {
                 throw Error("Can't activate GPRS profile. Possibly no data plan")
             }
         }
-        var action = { GET: 1, PUT: 3 }[method]
+        var action = { GET: 1, PUT: 3, POST: 4 }[method]
         var type = hostname.match(/^\d+.\d+.\d+.\d+/)? 0 : 1
         var port = port || (security? 443 : 80)
         var modem_file = "http_res"
         
-        if (method == "PUT") {
+        if (method == "PUT" || method == "POST") {
             await this.writeFile("put_data", data);
         }
 
@@ -293,7 +293,7 @@ class GSM {
             //`+CCLK="${date};"` +
             `+UHTTP=0;${security?'+UHTTP=0,6,1,0;':''}` +
             `+UHTTP=0,${type},"${hostname}";+UHTTP=0,5,${port};`+
-            `+UHTTPC=0,${action},"${path}","${modem_file}"${method=='PUT' ? ',"put_data",0' : ''}`
+            `+UHTTPC=0,${action},"${path}","${modem_file}"${method=='PUT' || method=='POST' ? ',"put_data",6,"xxx"' : ''}`
 
         response = await this.command(command, { timeout: 1 * 60 * 1000, response_valid: and(equal("code", "0"), has("http_result")) })
 

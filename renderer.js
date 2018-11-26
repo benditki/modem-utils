@@ -78,7 +78,7 @@ var ractive = new Ractive({
         cert: {},
         ready() { 
             return this.get('hostname') && this.get('path') &&
-                (this.get('method') != 'PUT' || this.get('put_data')) &&
+                (this.get('method') == 'GET' || this.get('put_data')) &&
                 (!this.get("use_security") ||
                 this.get("client_cert.checked") && this.get("client_cert.valid") &&
                 this.get("client_key.checked") && this.get("client_key.valid") &&
@@ -247,7 +247,7 @@ async function http(context) {
         var hostname = context.get('hostname')
         var port = context.get('port')
         var path = context.get('path')
-        var data = context.get('put_data')
+        var data = context.get('put_data').toString()
         
         var security = null
         if (context.get('use_security')) {
