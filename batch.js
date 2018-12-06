@@ -12,6 +12,38 @@ localStorage.debug = "" //"=D="
 
 function $(id) { return document.getElementById(id) }
 
+stats_db = {}
+
+function Stats() {
+    this.attempts = []
+    this.regist_avg = 0.0
+    this.acq_ip_avg = 0.0
+    this.calc = function () {
+        if (!this.attempts || !this.attempts.length) {
+            return
+        }
+        this.regist_avg =
+                this.attempts.reduce((res, attempt) =>
+                    res + (attempt.regist.end - attempt.regist.start) / 1000, 0) / this.attempts.length
+        this.acq_ip_avg =
+                this.attempts.reduce((res, attempt) =>
+                    res + (attempt.acq_ip.end - attempt.acq_ip.start) / 1000, 0) / this.attempts.length
+    }
+    this.log = function (item) {
+        if (!this.logs) this.logs = []
+        this.logs.push(item)
+    }
+}
+
+function stats(sim_id) {
+    if (sim_id) {
+        if (!stats_db[sim_id]) {
+            stats_db[sim_id] = new Stats()
+        }
+        return stats_db[sim_id];
+    }
+}
+
 var ractive = new Ractive({
     el: 'body',
     template: '#page-tpl',
@@ -22,7 +54,9 @@ var ractive = new Ractive({
                 return 'done'
             }
             if (gsm.state >= 1) return 'wip'
-        }
+        },
+        stats: stats,
+        format_time(ts) { return ts.toLocaleTimeString('en-GB') }
     },
     carousel() { return `<div class="dot-carousel"></div>` },
     waiting: (label) => { return `
@@ -52,7 +86,10 @@ window.ractive = ractive
 
 
 function log(msg) {
-    /*
+
+    var elem = $('log')
+    if (!elem) return;
+    
     var p = document.createElement("p")
     p.innerText = msg
     if (msg.startsWith('ERROR: ') || msg.startsWith('< +CME ERROR:')){
@@ -62,10 +99,9 @@ function log(msg) {
     } else if (msg.startsWith('> ')) {
         p.classList.add('sent')
     }
-    var elem = $('log')
     elem.appendChild(p)
     elem.scrollTop = elem.scrollHeight
-    */
+    
 }
 
 var desired_baudrate = 921600
@@ -79,6 +115,11 @@ function make_first(first, list) {
     }
     return res
 }
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 
 async function connect(port_name) {
     var baudrates = [115200, 921600]
@@ -139,25 +180,65 @@ async function connect(port_name) {
         response = await gsm.CCID()
         await ractive.set(key + "sim_id", response.sim_id)
         await ractive.set(key + "state", 4)
+        
+        
         if (response.sim_id) {
+            var stat = stats(response.sim_id)
             await ractive.set(key + "state", 5)
-            response = await gsm.command("AT+UCGOPS?;+CGATT?", {
-                response_valid: response => response && response.operator && response.network && response.gprs_attached == "1",
-                timeout: 2000
-            })
+            
+            var regist_start = null
+            
+            while (true) {
+                response = await gsm.command("AT+UCGOPS?;+CGATT?", {
+                    /*response_valid: response => response && response.operator && response.network && response.gprs_attached == "1",*/
+                    repeat: 1
+                    /*timeout: 2000*/
+                })
+                if (response && response.operator && response.network && response.gprs_attached == "1") break;
+                
+                if (!regist_start) {
+                    regist_start = new Date()
+                    stat.log({ts: regist_start, msg: "== start registration =="})
+                    await ractive.update(key + "sim_id", { force: true })
+                }
+                await sleep(2000);
+            }
+            
+            var regist_end = new Date()
+            
+            if (regist_start) {
+                stat.log({ts: regist_end, msg: `registered to ${response.operator}`})
+                await ractive.update(key + "sim_id", { force: true })
+            }
+            
             await ractive.set("operator", response.operator)
             await ractive.set("network", response.network)
             await ractive.set("gprs_attached", response.gprs_attached == "1")
             await ractive.set(key + "state", 6)
 
+            var acq_ip_start = null
             response = await gsm.command("AT+UPSND=0,8")
             if (response.status == "0") {
+                acq_ip_start = new Date()
                 await gsm.command("AT+UPSDA=0,3")
             }
 
             response = await gsm.command("AT+UPSND=0,0")
             await ractive.set("current_ip", response.ip)
             await ractive.set(key + "state", 7)
+            
+            var acq_ip_end = new Date()
+            
+            if (regist_start && acq_ip_start) {
+                stat.log({ts: acq_ip_end, msg: `got IP ${response.ip}`})
+                stat.attempts.push({
+                    regist: { start: regist_start, end: regist_end },
+                    acq_ip: { start: acq_ip_start, end: acq_ip_end }
+                })
+                stat.calc()
+                await ractive.update("", { force: true })
+            }
+            
         }
         
         await ractive.set(key + "done", true)
@@ -187,7 +268,7 @@ async function check(port_name) {
 }
 
 async function refresh_ports() {
-    var exclude_ports = ["COM1"]
+    var exclude_ports = ["COM1", "COM3", "COM26", "COM36"]
     var ports = await scan_ports()
 
     var port_names = [];
