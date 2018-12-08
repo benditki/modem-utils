@@ -228,7 +228,7 @@ nav h1 .A, header h1 .A {  color: red; }
 nav h1 .B, header h1 .B {  color: green; }
 nav h1 .C, header h1 .C {  color: yellow; }
 nav h1 .D, header h1 .D {  color: orange; }
-nav h1 .E, header h1 .E {  color: blue; }
+nav h1 .E, header h1 .E {  color: darkmagenta; }
 
 
 main {
@@ -601,4 +601,17 @@ footer {
 
 #batch-table .regist-log .time {
     color: #11b;
+}
+
+#batch-table output {
+    margin: 0 8px;
+}
+
+#batch-table output.action {
+    cursor: pointer;
+}
+
+#batch-table output.action,
+#batch-table output.action i {
+    color: #0c2fb3;
 }

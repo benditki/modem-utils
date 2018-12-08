@@ -11,7 +11,7 @@
 
     <script id='page-tpl' type='text/ractive'>
     <header>
-        <h1><span class="A">.</span><span class="B">M</span><span class="C">U</span><span class="D">.</span><span class="E">BATCH</span></h1>
+        <h1><span class="A">.</span><span class="B">M</span><span class="C">U</span><span class="D">.</span><span class="E">BENCH</span></h1>
     </header>
     
     <main>
@@ -30,6 +30,7 @@
         {{#if done}}
         {{#if state==7}}   <output> <i class="good">&#xe66c;</i> Done</output>
         {{elseif !sim_id}} <output> <i class="warn">&#xe67b;</i> No sim</output> {{/if}}
+        {{#if restart_ts}} <output class="action" on-click=['restart', port_name]><!--<i>&#xe61c;</i>-->{{@.format_countdown(restart_ts)}} Restart </output> {{/if}}
         {{/if}}
     </td>{{/each}}</tr>
     <tr class="stats-title"><th>Statistics</th>  {{#each gsm: port_name}}<td class="space"></td><td class="space"></td>{{/each}}</tr>
