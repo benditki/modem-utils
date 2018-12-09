@@ -635,6 +635,24 @@ footer {
     color: #11b;
 }
 
+#batch-table .regist-log .duration {
+    color: #1b1;
+}
+
+#batch-table .regist-log th i {
+    font-size: 20px;
+    color: #99f;
+    cursor: pointer;
+}
+
+#batch-table .regist-log th i:hover {
+    color: #11f;
+    text-shadow: 2px 2px 0 #aaa;
+    position: relative;
+    left: -2px;
+    top: -2px;
+}
+
 #batch-table output {
     margin: 0 8px;
 }

@@ -38,8 +38,13 @@
     <tr><th>Attempts</th>{{#each gsm: port_name}}<td class="space"></td><td class="space">{{#with sim_stats(sim_id)}}{{#if attempts}}{{attempts.length}}{{else}}0{{/if}}{{/with}}</td>{{/each}}</tr>
     <tr><th>Registration</th>{{#each gsm: port_name}}<td class="space"></td><td class="space">{{#with sim_stats(sim_id)}}{{regist_avg(attempts).toFixed(1)}} sec{{/with}}</td>{{/each}}</tr>
     <tr><th>Acquire IP</th>  {{#each gsm: port_name}}<td class="space"></td><td class="space">{{#with sim_stats(sim_id)}}{{acq_ip_avg(attempts).toFixed(1)}} sec{{/with}}</td>{{/each}}</tr>
-    <tr class="regist-log"><th>Logs</th>        {{#each gsm: port_name}}<td class="space"></td><td class="space">
-        {{#with sim_stats(sim_id)}}{{#each ./logs}}<p><span class="time">{{format_time(ts)}}</span> {{msg}}</p>{{/each}}{{/with}}
+    <tr class="regist-log"><th>Logs <i on-click="save_reg_logs">&#xe65c;</i></th>        {{#each gsm: port_name}}<td class="space"></td><td class="space">
+        {{#with sim_stats(sim_id)}}
+        {{#each ./logs}}
+        <p><span class="time">{{format_time(ts)}}</span> {{msg}}
+        {{#if duration}}<span class="duration">({{duration}} sec)</span>{{/if}}</p>
+        {{/each}}
+        {{/with}}
     </td>{{/each}}</tr>
     </table>
     </main>

@@ -3,6 +3,7 @@ const fs = require('fs')
 const Ractive = require('ractive')
 const GSM = require('./gsm.js')
 const util = require('util')
+const {dialog} = require('electron').remote
 
 gsms = {}
 
@@ -39,6 +40,9 @@ var ractive = new Ractive({
             if (!attempts || attempts.length == 0) return 0
             return attempts.reduce((res, attempt) =>
                     res + (attempt.acq_ip.end - attempt.acq_ip.start) / 1000, 0) / attempts.length
+        },
+        all_logs_shown() {
+            return Object.keys(this.get('logs')).every(port_name => this.get("show_log." + port_name))
         }
     },
     carousel() { return `<div class="dot-carousel"></div>` },
@@ -54,6 +58,25 @@ var ractive = new Ractive({
             if (gsm) {
                 await gsm.command("AT+CFUN=15")
             }
+        },
+        toggle_all_logs(context) {
+            var all_shown = this.get('all_logs_shown')()
+            Object.keys(this.get('logs')).forEach(port_name => this.set('show_log.' + port_name, !all_shown))
+        },
+        async save_reg_logs() {
+            var lines = ["SIM, Date, Time, Message, Duration"]
+            for (var sim_label of Object.keys(this.get('stats') || []).sort()) {
+                var sim_id = sim_label.slice(3)
+                for (var item of (this.get('stats.' + sim_label + '.logs') || [])) {
+                    lines.push([sim_id, item.ts.toLocaleString('en-GB'), item.msg, item.duration || ""].join(", "))
+                }
+            }
+            var content = lines.join("\r\n")
+            dialog.showSaveDialog({ defaultPath: "sims.csv" }, filename => {
+                if (filename) {
+                    fs.writeFileSync(filename, content)
+                }
+            })
         }
     },
     format_countdown(ts) {
@@ -94,7 +117,7 @@ window.ractive = ractive
 
 function log(port_name, type, msg) {
     var item = { port: port_name, type: type, msg: msg}
-    if (msg.startsWith('ERROR: ') || msg.startsWith('< +CME ERROR:')) {
+    if (msg.startsWith('ERROR: ') || msg.startsWith('+CME ERROR:')) {
         item.error = true
     }
     
@@ -203,7 +226,7 @@ async function connect(port_name) {
             var regist_end = new Date()
             
             if (regist_start) {
-                ractive.push(stat_key + ".logs", {ts: regist_end, msg: `registered to ${response.operator}`})
+                ractive.push(stat_key + ".logs", {ts: regist_end, msg: `registered to ${response.operator}`, duration: Math.ceil((regist_end - regist_start) / 1000) })
             }
             
             await ractive.set(key + "operator", response.operator)
@@ -225,7 +248,7 @@ async function connect(port_name) {
             var acq_ip_end = new Date()
             
             if (regist_start && acq_ip_start) {
-                ractive.push(stat_key + ".logs", {ts: acq_ip_end, msg: `got IP ${response.ip}`})
+                ractive.push(stat_key + ".logs", {ts: acq_ip_end, msg: `got IP ${response.ip}`, duration: Math.ceil((acq_ip_end - acq_ip_start) / 1000) })
                 ractive.push(stat_key + ".attempts", {
                     regist: { start: regist_start, end: regist_end },
                     acq_ip: { start: acq_ip_start, end: acq_ip_end }
