@@ -34,19 +34,30 @@
         {{/if}}
     </td>{{/each}}</tr>
     <tr class="stats-title"><th>Statistics</th>  {{#each gsm: port_name}}<td class="space"></td><td class="space"></td>{{/each}}</tr>
-    <tr><th>Attempts</th>{{#each gsm: port_name}}<td class="space"></td><td class="space">{{#each stats: sim_id}}{{attempts.length}}{{else}}0{{/each}}</td>{{/each}}</tr>
-    <!--<tr><th>Registration</th>{{#each gsm: port_name}}<td class="space"></td><td class="space">{{#with stats(sim_id)}}{{regist_avg.toFixed(1)}} sec{{/with}}</td>{{/each}}</tr>
-    <tr><th>Acquire IP</th>  {{#each gsm: port_name}}<td class="space"></td><td class="space">{{#with stats(sim_id)}}{{acq_ip_avg.toFixed(1)}} sec{{/with}}</td>{{/each}}</tr>
+    <!--<tr><th>Test</th>{{#each gsm: port_name}}<td class="space"></td><td class="space">{{#with sim_stats(sim_id)}}{{test.length}}{{else}}_0_{{/with}}</td>{{/each}}</tr>-->
+    <tr><th>Attempts</th>{{#each gsm: port_name}}<td class="space"></td><td class="space">{{#with sim_stats(sim_id)}}{{#if attempts}}{{attempts.length}}{{else}}0{{/if}}{{/with}}</td>{{/each}}</tr>
+    <tr><th>Registration</th>{{#each gsm: port_name}}<td class="space"></td><td class="space">{{#with sim_stats(sim_id)}}{{regist_avg(attempts).toFixed(1)}} sec{{/with}}</td>{{/each}}</tr>
+    <tr><th>Acquire IP</th>  {{#each gsm: port_name}}<td class="space"></td><td class="space">{{#with sim_stats(sim_id)}}{{acq_ip_avg(attempts).toFixed(1)}} sec{{/with}}</td>{{/each}}</tr>
     <tr class="regist-log"><th>Logs</th>        {{#each gsm: port_name}}<td class="space"></td><td class="space">
-        {{#with stats(sim_id)}}{{#each logs}}<p><span class="time">{{format_time(ts)}}</span> {{msg}}</p>{{/each}}{{/with}}
-    </td>{{/each}}</tr>-->
+        {{#with sim_stats(sim_id)}}{{#each ./logs}}<p><span class="time">{{format_time(ts)}}</span> {{msg}}</p>{{/each}}{{/with}}
+    </td>{{/each}}</tr>
     </table>
     </main>
     
     <footer>
         <div id="log">
-        {{#each logs}}
-            <p>{{#if type=="in"}}&lt;{{elseif type=="out"}}&gt;{{/if}} {{msg}}</p>
+        <ul>
+        <li><a class-shown="all_logs_shown()" on-click="toggle_all_logs">ALL</a></li>
+        {{#each logs as items: port_name}}<li><a class-shown="@.get('show_log.' + port_name)" on-click="@.toggle('show_log.' + port_name)">{{port_name}}</a></li>{{/each}}
+        </ul>
+        {{#each logs as items: port_name}}
+            {{#if @.get('show_log.' + port_name)}}
+            {{#each items.slice(-6)}}
+                <p class-error="error" class-sent="type=='out'" class-received="type=='in'">{{port_name}}: {{#if type=="in"}}&lt;{{elseif type=="out"}}&gt;{{/if}} {{msg}}</p>
+            {{/each}}
+            {{/if}}
+        {{else}}
+        no logs
         {{/each}}
         </div>
     </footer>

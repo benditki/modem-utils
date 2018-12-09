@@ -16,6 +16,9 @@ var ractive = new Ractive({
     el: 'body',
     template: '#page-tpl',
     data: {
+        stats: {},
+        logs: {},
+        gsm: {},
         show_grid: false,
         state_class(gsm) {
             if (gsm.done) {
@@ -23,14 +26,17 @@ var ractive = new Ractive({
             }
             if (gsm.state >= 1) return 'wip'
         },
+        sim_stats(sim_id) {
+            return this.get("stats.sim" + sim_id)
+        },
         format_time(ts) { return ts.toLocaleTimeString('en-GB') },
         regist_avg(attempts) {
-            if (attempts.length == 0) return 0
+            if (!attempts || attempts.length == 0) return 0
             return attempts.reduce((res, attempt) =>
                     res + (attempt.regist.end - attempt.regist.start) / 1000, 0) / attempts.length
         },
         acq_ip_avg(attempts) {
-            if (attempts.length == 0) return 0
+            if (!attempts || attempts.length == 0) return 0
             return attempts.reduce((res, attempt) =>
                     res + (attempt.acq_ip.end - attempt.acq_ip.start) / 1000, 0) / attempts.length
         }
@@ -173,7 +179,8 @@ async function connect(port_name) {
         
         
         if (response.sim_id) {
-            var stat_key = "stats." + response.sim_id
+            var stat_key = "stats.sim" + response.sim_id
+            await ractive.push(stat_key + ".test", new Date())
             await ractive.set(key + "state", 5)
             
             var regist_start = null
@@ -269,7 +276,7 @@ async function check(port_name) {
 }
 
 async function refresh_ports() {
-    var exclude_ports = ["COM1"]
+    var exclude_ports = ["COM1", "COM26"]
     var ports = await scan_ports()
 
     var port_names = [];
@@ -280,7 +287,8 @@ async function refresh_ports() {
 
     for (var port_name of port_names) {
         if (!gsms[port_name]) {
-            var gsm = new GSM((type, msg) => log(port_name, type, msg))
+            let port_name_clone = port_name.slice(0)
+            var gsm = new GSM((type, msg) => log(port_name_clone, type, msg))
             gsms[port_name] = gsm
             connect(port_name)
         }
