@@ -136,7 +136,7 @@ class ModemParser extends Transform {
                     }
                     
                     parsing = true;
-                    this.log("< " + jsesc(res[0]))
+                    this.log("in", jsesc(res[0]))
                     var response = {}
                     for (var i = 1; i < test.length; i++) {
                         debug("typeof test[i] ==", typeof test[i])
@@ -159,7 +159,7 @@ class ModemParser extends Transform {
     }
 
     _flush(cb) {
-        this.log("< " + jsesc(this.data));
+        this.log("in", jsesc(this.data));
         this.push(this.data);
         this.data = '';
         setImmediate(cb);
@@ -195,7 +195,7 @@ class GSM {
         if (this.port && this.port.isOpen) {
             debug("disconnecting from previous port");
             await promisify(this.port.close).call(this.port)
-            this.log(`Disconnected from ${this.port.path}`)
+            this.log("system", `Disconnected from ${this.port.path}`)
             this.port = null
         }
     }
@@ -212,7 +212,7 @@ class GSM {
                 await new Promise((resolve, reject) => {
                     port.open(reject);
                     port.on('open', resolve);
-                }).then(() => { this.log(`Connected to ${path}, baudrate=${baudrate}`) } );
+                }).then(() => { this.log("system", `Connected to ${path}, baudrate=${baudrate}`) } );
                 
                 await this.AT()
                 await this.command("AT+CMEE=2")
@@ -221,7 +221,7 @@ class GSM {
             }
             catch (e) {
                 if (i + 1 < baudrates.length && e instanceof NoResponseError) {
-                    this.log("no response")
+                    this.log("system", "no response")
                 } else {
                     throw e
                 }
@@ -242,7 +242,7 @@ class GSM {
             try {
                 var promise = this.receiveResponse(cmd, response_valid, timeout);
 
-                this.log("> " + jsesc(cmd + "\r"));
+                this.log("out", jsesc(cmd + "\r"));
                 this.port.write(cmd + "\r");
                 await promisify(this.port.drain).call(this.port);
                 counter++;
@@ -294,7 +294,7 @@ class GSM {
 
     async sendData(data) {
         this.port.write(data);
-        this.log("> " + jsesc(data));
+        this.log("out", jsesc(data));
         return this.port.drain();
     }
 
@@ -305,6 +305,15 @@ class GSM {
             if (response.sim_id) return response
         }
         return {}
+    }
+    
+    async activateData() {
+        while (true) {
+            var response = await this.command("AT+UPSDA=0,3", { timeout: 2 * 60000 } )
+            if (response.code == 0) {
+                return response
+            }
+        }
     }
 
     async loadCert(type, data, label) {

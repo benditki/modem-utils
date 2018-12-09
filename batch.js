@@ -12,38 +12,6 @@ localStorage.debug = "" //"=D="
 
 function $(id) { return document.getElementById(id) }
 
-stats_db = {}
-
-function Stats() {
-    this.attempts = []
-    this.regist_avg = 0.0
-    this.acq_ip_avg = 0.0
-    this.calc = function () {
-        if (!this.attempts || !this.attempts.length) {
-            return
-        }
-        this.regist_avg =
-                this.attempts.reduce((res, attempt) =>
-                    res + (attempt.regist.end - attempt.regist.start) / 1000, 0) / this.attempts.length
-        this.acq_ip_avg =
-                this.attempts.reduce((res, attempt) =>
-                    res + (attempt.acq_ip.end - attempt.acq_ip.start) / 1000, 0) / this.attempts.length
-    }
-    this.log = function (item) {
-        if (!this.logs) this.logs = []
-        this.logs.push(item)
-    }
-}
-
-function stats(sim_id) {
-    if (sim_id) {
-        if (!stats_db[sim_id]) {
-            stats_db[sim_id] = new Stats()
-        }
-        return stats_db[sim_id];
-    }
-}
-
 var ractive = new Ractive({
     el: 'body',
     template: '#page-tpl',
@@ -55,8 +23,17 @@ var ractive = new Ractive({
             }
             if (gsm.state >= 1) return 'wip'
         },
-        stats: stats,
-        format_time(ts) { return ts.toLocaleTimeString('en-GB') }
+        format_time(ts) { return ts.toLocaleTimeString('en-GB') },
+        regist_avg(attempts) {
+            if (attempts.length == 0) return 0
+            return attempts.reduce((res, attempt) =>
+                    res + (attempt.regist.end - attempt.regist.start) / 1000, 0) / attempts.length
+        },
+        acq_ip_avg(attempts) {
+            if (attempts.length == 0) return 0
+            return attempts.reduce((res, attempt) =>
+                    res + (attempt.acq_ip.end - attempt.acq_ip.start) / 1000, 0) / attempts.length
+        }
     },
     carousel() { return `<div class="dot-carousel"></div>` },
     waiting: (label) => { return `
@@ -109,25 +86,13 @@ window.onbeforeunload = function () {
 window.ractive = ractive
 
 
-
-
-function log(msg) {
-
-    var elem = $('log')
-    if (!elem) return;
-    
-    var p = document.createElement("p")
-    p.innerText = msg
-    if (msg.startsWith('ERROR: ') || msg.startsWith('< +CME ERROR:')){
-        p.classList.add('error')
-    } else if (msg.startsWith('< ')) {
-        p.classList.add('received')
-    } else if (msg.startsWith('> ')) {
-        p.classList.add('sent')
+function log(port_name, type, msg) {
+    var item = { port: port_name, type: type, msg: msg}
+    if (msg.startsWith('ERROR: ') || msg.startsWith('< +CME ERROR:')) {
+        item.error = true
     }
-    elem.appendChild(p)
-    elem.scrollTop = elem.scrollHeight
     
+    ractive.push(`logs.${port_name}`, item)
 }
 
 var desired_baudrate = 921600
@@ -208,7 +173,7 @@ async function connect(port_name) {
         
         
         if (response.sim_id) {
-            var stat = stats(response.sim_id)
+            var stat_key = "stats." + response.sim_id
             await ractive.set(key + "state", 5)
             
             var regist_start = null
@@ -223,8 +188,7 @@ async function connect(port_name) {
                 
                 if (!regist_start) {
                     regist_start = new Date()
-                    stat.log({ts: regist_start, msg: "== start registration =="})
-                    await ractive.update(key + "sim_id", { force: true })
+                    ractive.push(stat_key + ".logs", {ts: regist_start, msg: "== start registration =="})
                 }
                 await sleep(2000);
             }
@@ -232,20 +196,19 @@ async function connect(port_name) {
             var regist_end = new Date()
             
             if (regist_start) {
-                stat.log({ts: regist_end, msg: `registered to ${response.operator}`})
-                await ractive.update(key + "sim_id", { force: true })
+                ractive.push(stat_key + ".logs", {ts: regist_end, msg: `registered to ${response.operator}`})
             }
             
-            await ractive.set("operator", response.operator)
-            await ractive.set("network", response.network)
-            await ractive.set("gprs_attached", response.gprs_attached == "1")
+            await ractive.set(key + "operator", response.operator)
+            await ractive.set(key + "network", response.network)
+            await ractive.set(key + "gprs_attached", response.gprs_attached == "1")
             await ractive.set(key + "state", 6)
 
             var acq_ip_start = null
             response = await gsm.command("AT+UPSND=0,8")
             if (response.status == "0") {
                 acq_ip_start = new Date()
-                await gsm.command("AT+UPSDA=0,3")
+                response = await gsm.activateData();
             }
 
             response = await gsm.command("AT+UPSND=0,0")
@@ -255,13 +218,11 @@ async function connect(port_name) {
             var acq_ip_end = new Date()
             
             if (regist_start && acq_ip_start) {
-                stat.log({ts: acq_ip_end, msg: `got IP ${response.ip}`})
-                stat.attempts.push({
+                ractive.push(stat_key + ".logs", {ts: acq_ip_end, msg: `got IP ${response.ip}`})
+                ractive.push(stat_key + ".attempts", {
                     regist: { start: regist_start, end: regist_end },
                     acq_ip: { start: acq_ip_start, end: acq_ip_end }
                 })
-                stat.calc()
-                await ractive.update("", { force: true })
             }
             
         }
@@ -272,7 +233,7 @@ async function connect(port_name) {
         setTimeout(check, 200, port_name)
     }
     catch (e) {
-        log("ERROR: " + e.message)
+        log(port_name, "system", "ERROR: " + e.message)
         disconnect(port_name)
     }
 }
@@ -302,7 +263,7 @@ async function check(port_name) {
         }
         setTimeout(check, 400, port_name)
     } catch (e) {
-        log("ERROR: " + e.message)
+        log(port_name, "system", "ERROR: " + e.message)
         await disconnect(port_name)
     }
 }
@@ -319,7 +280,7 @@ async function refresh_ports() {
 
     for (var port_name of port_names) {
         if (!gsms[port_name]) {
-            var gsm = new GSM(log)
+            var gsm = new GSM((type, msg) => log(port_name, type, msg))
             gsms[port_name] = gsm
             connect(port_name)
         }

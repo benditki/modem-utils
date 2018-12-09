@@ -24,6 +24,6 @@
     "serialport": "^6.2.0"
   },
   "build": {
-    "electronVersion": "2.0.8"
+    "electronVersion": "3.0.10"
   }
 }
