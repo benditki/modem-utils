@@ -3,7 +3,9 @@ const fs = require('fs')
 const Ractive = require('ractive')
 const GSM = require('./gsm.js')
 const util = require('util')
-const {dialog} = require('electron').remote
+const { remote, ipcRenderer } = require('electron')
+const modal = require('electron-modal')
+const path = require('path');
 
 gsms = {}
 
@@ -20,6 +22,12 @@ var ractive = new Ractive({
         stats: {},
         logs: {},
         gsm: {},
+        settings: {
+            apn: "mobileye8",
+            baudrate: 921600,
+            mode: "bench"
+        },
+
         show_grid: false,
         state_class(gsm) {
             if (gsm.done) {
@@ -72,11 +80,69 @@ var ractive = new Ractive({
                 }
             }
             var content = lines.join("\r\n")
-            dialog.showSaveDialog({ defaultPath: "sims.csv" }, filename => {
+            remote.dialog.showSaveDialog({ defaultPath: "sims.csv" }, filename => {
                 if (filename) {
                     fs.writeFileSync(filename, content)
                 }
             })
+        },
+        async open_settings() {
+            var groups = []
+            if (this.get('settings.user') == 'dev') {
+                groups.push({
+                    name: "General",
+                    items: [
+                        { name: "Mode", path: "settings.mode", choices: ["dev", "batch", "bench"] }
+                    ]
+                })
+            }
+            groups.push({
+                name: "Configuring",
+                items: [
+                    { name: "Baudrate", path: "settings.baudrate" },
+                    { name: "APN", path: "settings.apn" }
+                ]
+            })
+            var settings = {
+                groups
+            }
+
+            for (group of settings.groups) {
+                for (item of group.items) {
+                    item.value = this.get(item.path)
+                }
+            }
+        
+            var settings_win = await modal.open(path.join(__dirname, 'settings.html'), {
+                parent: remote.getCurrentWindow(),
+                modal: true,
+                show: false,
+                width: 800,
+                height: 600
+            }, settings)
+            settings_win.on('apply', (data) => {
+                var changed = false
+                
+                for (group of data.groups) {
+                    for (item of group.items) {
+                        if (item.value != this.get(item.path)) {
+                            changed = true
+                            this.set(item.path, item.value)
+                        }
+                    }
+                }
+                
+                console.log("got", data, "changed", changed)
+
+                if (changed) {
+                    ipcRenderer.send('store', this.get('settings'))
+                    
+                    for(var port_name in this.get("gsm")) {
+                        connect(port_name)
+                    }
+                }
+            });
+            settings_win.show()
         }
     },
     format_countdown(ts) {
@@ -97,6 +163,10 @@ var ractive = new Ractive({
     }
 
 });
+
+ipcRenderer.on('settings', (event, settings) => {
+    ractive.set('settings', settings, { deep: true /* effectively merges the object in */})
+})
 
 var baudrate_map = {}
 
@@ -123,8 +193,6 @@ function log(port_name, type, msg) {
     
     ractive.push(`logs.${port_name}`, item)
 }
-
-var desired_baudrate = 921600
 
 function make_first(first, list) {
     var res = [first]
@@ -156,6 +224,8 @@ async function connect(port_name) {
         await ractive.set(key + "active_baudrate", baudrate)
         await ractive.set(key + "state", 1)
 
+        var desired_baudrate = ractive.get("settings.baudrate")
+
         if (baudrate != desired_baudrate) {
             await gsm.command(`AT+IPR=${desired_baudrate}`)
             baudrate = await gsm.connect(port_name, make_first(desired_baudrate, baudrates))
@@ -182,12 +252,12 @@ async function connect(port_name) {
         }
 
         response = await gsm.command("AT+UPSD=0,1;+UPSD=0,7;&V")
-        if (response.apn != "mobileye8" || response.stored_ip != "0.0.0.0" ||
+        if (response.apn != ractive.get("settings.apn") || response.stored_ip != "0.0.0.0" ||
                 response.flow_control != "0" || response.echo != "0" || response.verbose != "0") {
             if (gprs_activated) {
                 await gsm.command("AT+UPSDA=0,4")
             }
-            await gsm.command("ATE0;V0;&K0;&W;+UPSD=0,1,\"mobileye8\";+UPSD=0,7,\"0.0.0.0\";+UPSDA=0,1")
+            await gsm.command("ATE0;V0;&K0;&W;+UPSD=0,1,\"" + ractive.get("settings.apn") + "\";+UPSD=0,7,\"0.0.0.0\";+UPSDA=0,1")
             await gsm.restart()
             await gsm.command("AT+UPSDA=0,2")
             response = await gsm.command("AT+UPSD=0,1;+UPSD=0,7")
@@ -216,7 +286,7 @@ async function connect(port_name) {
                 })
                 if (response && response.operator && response.network && response.gprs_attached == "1") break;
                 
-                if (!regist_start) {
+                if (ractive.get('settings.mode') == 'bench' && !regist_start) {
                     regist_start = new Date()
                     ractive.push(stat_key + ".logs", {ts: regist_start, msg: "== start registration =="})
                 }
@@ -269,8 +339,10 @@ async function connect(port_name) {
 }
 
 async function disconnect(port_name) {
-    await gsms[port_name].disconnect()
-    delete gsms[port_name]
+    if (gsms[port_name]) {
+        await gsms[port_name].disconnect()
+        delete gsms[port_name]
+    }
 }
 
 async function check(port_name) {

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="anim.css">
+    <style>
+    :root {
+    }
+    
+    html {
+        height: 100%;
+    }
+    body {
+        min-height: 100%;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    main {
+        height: 100%;
+        flex-grow: 1;
+    }
+    header {
+        height: 40px;
+    }
+    footer {
+        height: 40px;
+        display: flex;
+        justify-content: flex-end;
+    }
+    label.field, input {
+        margin: 4px 8px;
+        vertical-align: baseline;
+    }
+    label.field {
+        width: 200px;
+        display: inline-block;
+    }
+    article h1 {
+        text-transform: uppercase;
+        font-size: 20px;
+        font-weight: normal;
+        color: #229;
+        margin: 8px 8px;
+    }
+    
+    input[type=radio].choices {
+        -webkit-appearance: none;
+        margin: 0;
+        padding: 0;
+    }
+    input[type=radio].choices + label {
+        border: 1px solid #ddd;
+        padding: 2px 8px;
+    }
+    input[type=radio].choices.right + label {
+        border-radius: 0 8px 8px 0;
+    }
+    input[type=radio].choices.left + label {
+        border-radius: 8px 0 0 8px;
+    }
+    input[type=radio].choices:checked + label {
+        border: 3px solid #8cf;
+        padding: 0 6px;
+    }
+    
+    </style>
+    </head>
+
+    <body>
+    </body>
+    <script id="settings-tpl" type="text/ractive">
+    <!--<header>
+    </header>-->
+    <main>
+    {{#groups}}
+    <article>
+    <h1>{{name}}</h1>
+    <ul>
+    {{#items}}
+    <li><label class="field">{{name}}</label>
+    {{#if choices}}
+    <span class='no-space'>
+    {{#choices: choice_idx}}
+    <input type="radio" id="{{name}}_{{choice_idx}}" name="{{value}}" value="{{.}}" class="choices"  class-left="choice_idx == 0" class-right="choice_idx == choices.length - 1"/><!--
+    --><label for="{{name}}_{{choice_idx}}">{{.}}</label>
+    {{/choices}}
+    </span>
+    {{else}}
+    <input type="text" value="{{value}}">
+    {{/if}}
+    </li>
+    {{/items}}
+    </ul>
+    </article>
+    {{/groups}}
+    </main>
+    <footer>
+        <button id="#cancel" type="button" on-click="close"><i>&#xe681;</i>Cancel</button>
+        <button id="#apply" type="button" on-click="apply"><i>&#xe624;</i>Apply</button>
+        <button id="#Ok" type="button" on-click="ok"><i>&#xe66c;</i>Ok</button>
+    </footer>
+    </script>
+
+    <script>
+    const modal = require('electron-modal')
+    const Ractive = require('ractive')
+    
+    var ractive = new Ractive({
+        el: 'body',
+        template: '#settings-tpl',
+        data: {},
+        on: {
+            apply() {
+                modal.emit('apply', this.get());
+            },
+            close() {
+                window.close()
+            },
+            ok() {
+                modal.emit('apply', this.get());
+                window.close()
+            }            
+        }
+    })
+
+    
+    init()
+
+    async function init() {
+        var data = await modal.getData()
+        ractive.set(data)
+    };
+    </script>
+</html>
