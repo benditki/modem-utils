@@ -25,7 +25,7 @@ var ractive = new Ractive({
         settings: {
             apn: "mobileye8",
             baudrate: 921600,
-            mode: "bench"
+            mode: "batch"
         },
 
         show_grid: false,
@@ -371,12 +371,15 @@ async function check(port_name) {
 }
 
 async function refresh_ports() {
-    var exclude_ports = ["COM1", "COM26"]
+    var exclude_ports = { "COM1": true }
+    for (var port_name of (ractive.get('settings.exclude_ports') || [])) {
+        exclude_ports[port_name] = true
+    }
     var ports = await scan_ports()
 
     var port_names = [];
     for (port of ports) {
-        if (exclude_ports.includes(port.comName)) continue;
+        if (exclude_ports[port.comName]) continue;
         port_names.push(port.comName)
     }
 
